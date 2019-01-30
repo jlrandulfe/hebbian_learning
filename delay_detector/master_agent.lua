@@ -26,7 +26,7 @@ Stat = require "ranalib_statistic"
 Event = require "ranalib_event"
 
 -- Agents parameters
-n_neurons = 2
+n_neurons = 8
 agents = {}
 
 -- Time variables

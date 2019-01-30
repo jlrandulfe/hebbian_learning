@@ -31,8 +31,6 @@ Event = require "ranalib_event"
 axon_link_length = 5
 
 init = true
-init_groups = false
-Tn = 0
 
 function initializeAgent()
 
@@ -52,8 +50,6 @@ end
 
 function takeStep()
 
-    Tn = Tn + STEP_RESOLUTION
-
     if init == true then
         -- Add the first axon agent
         axon_centre_x = PositionX + (axon_link_length+1)/2
@@ -68,13 +64,6 @@ function takeStep()
         init = false
     end
 
-    -- Establish parent-child relationship for all neuron agents. The waiting
-    -- is needed to avoid bugs in RANA implementation.
-    if Tn > 2  and init_groups == false then
-        Event.emit{speed=0, description="assign_group", targetID=new_agent}
-        init_groups = true
-    end
-
 end
 
 
@@ -83,6 +72,9 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
     if eventDescription == "synapse" then
         Event.emit{speed=0, description="excited_neuron", targetGroup=ID}
         Event.emit{speed=0, description="electric_pulse"}
+    end
+    if eventDescription == "cone_init" and sourceID == new_agent then
+        Event.emit{speed=0, description="assign_group", targetID=new_agent}
     end
 end
 

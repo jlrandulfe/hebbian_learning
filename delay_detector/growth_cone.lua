@@ -30,6 +30,7 @@ Math = require "ranalib_math"
 -- Agent properties
 move = false
 parent_soma_id = -1
+init = true
 
 -- Neuron properties
 axon_link_length = 5
@@ -37,7 +38,7 @@ connected = false
 excited = false
 excitation_level = 0
 min_time_diff = 0.0
-max_time_diff = 0.2
+max_time_diff = 0.12
 
 absolute_time = 0
 excited_neuron_time = 0
@@ -62,6 +63,11 @@ end
 
 
 function takeStep()
+
+    if init == true then
+        Event.emit{speed=0, description="cone_init"}
+        init = false
+    end
 
     -- Get the distance from the last location where an axon agent was created.
     coords.x1 = PositionX
@@ -141,9 +147,13 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         else
             valid_time = false
         end
-        if valid_source and valid_time then
-            local intensity = 1
-            pulses_table[sourceID] = {sourceX, sourceY, intensity}
+        if valid_source then
+            if valid_time then
+                local intensity = 1
+                pulses_table[sourceID] = {sourceX, sourceY, intensity}
+            else
+                pulses_table[sourceID] = {sourceX, sourceY, 0}
+            end
         end
 
     elseif eventDescription == "assign_group" then
