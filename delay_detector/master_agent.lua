@@ -25,30 +25,44 @@ Agent = require "ranalib_agent"
 Stat = require "ranalib_statistic"
 Event = require "ranalib_event"
 
-n_neurons = 1
+-- Agents parameters
+n_neurons = 8
+agents = {}
+
+-- Time variables
+T_trigger = {}
+Tn = 0
+neuron_delay = 100 * 1e-3   -- [s]
+period = 1000 * 1e-3        -- [s]
 
 function initializeAgent()
     say("Master Agent#: " .. ID .. " has been initialized")
     PositionX = -1
     PositionY = -1
 
-    -- Add neurons
+    -- Create N neurons, and get their IDs in a list
     for i=1, n_neurons do
-        Agent.addAgent("soma.lua", 60, ENV_HEIGHT/2)	
+        agents[i] = Agent.addAgent("soma.lua", i * ENV_WIDTH / (n_neurons+2),
+                                       ENV_HEIGHT/2)
+        -- Set the inital trigger times for the different neurons
+        T_trigger[i] = Tn +  i * neuron_delay
     end
 
-    pulse_generator1 = Agent.addAgent("pulse_generator.lua", ENV_WIDTH-10, 10)
-    pulse_generator2 = Agent.addAgent("pulse_generator.lua", ENV_WIDTH-10,
-                                      ENV_HEIGHT-10)	
 end
 
 
 function takeStep()
-    Event.emit{speed=0, description="set_intensity", targetID=pulse_generator1,
-               table={["intensity"]=150}}
-    Event.emit{speed=0, description="set_intensity", targetID=pulse_generator2,
-               table={["intensity"]=90}}
-	Agent.removeAgent(ID)
+
+    -- Keep track of time, and send excitations to each neuron depending on
+    -- their corresponding delays.
+    Tn = Tn + STEP_RESOLUTION       -- [s]
+    for i=1, n_neurons do
+        if Tn > T_trigger[i] then
+            Event.emit{speed=0, description="electric_pulse",
+                       targetID=agents[i]}
+            T_trigger[i] = T_trigger[i] + period
+        end
+    end
 end
 
 
