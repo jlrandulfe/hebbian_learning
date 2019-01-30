@@ -26,7 +26,7 @@ Stat = require "ranalib_statistic"
 Event = require "ranalib_event"
 
 -- Agents parameters
-n_neurons = 8
+n_neurons = 2
 agents = {}
 
 -- Time variables
@@ -58,7 +58,7 @@ function takeStep()
     Tn = Tn + STEP_RESOLUTION       -- [s]
     for i=1, n_neurons do
         if Tn > T_trigger[i] then
-            Event.emit{speed=0, description="electric_pulse",
+            Event.emit{speed=0, description="synapse",
                        targetID=agents[i]}
             T_trigger[i] = T_trigger[i] + period
         end

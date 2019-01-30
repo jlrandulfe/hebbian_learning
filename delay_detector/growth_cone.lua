@@ -37,7 +37,7 @@ connected = false
 excited = false
 excitation_level = 0
 min_time_diff = 0.0
-max_time_diff = 0.1
+max_time_diff = 0.2
 
 absolute_time = 0
 excited_neuron_time = 0
@@ -47,7 +47,7 @@ function initializeAgent()
 
     Agent.changeColor{g=255}
     -- Initialize the soma at the middle of the map
-    say("Axon Agent#: " .. ID .. " has been initialized")
+    say("Growth cone Agent#: " .. ID .. " has been initialized")
     
     
 	Speed = 100
@@ -124,18 +124,31 @@ end
 function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
 
     if eventDescription == "electric_pulse" then
+        -- Ignore the pulse if parent-child relationship is not initialized
+        -- nor the received pulse is from parent
+        if sourceID == parent_soma_id or parent_soma_id == -1 then
+            valid_source = false
+        else
+            valid_source = true
+        end
         -- Get the time difference between the neuron excitation and the
         -- received pulse. Store the electric pulse source if the
         -- difference is between the thresholds.
         received_pulse_time = absolute_time
         time_diff = received_pulse_time - excited_neuron_time
         if time_diff > min_time_diff and time_diff < max_time_diff then
-            local intensity = eventTable[1]
+            valid_time = true
+        else
+            valid_time = false
+        end
+        if valid_source and valid_time then
+            local intensity = 1
             pulses_table[sourceID] = {sourceX, sourceY, intensity}
         end
 
     elseif eventDescription == "assign_group" then
         parent_soma_id = sourceID
+        say("Growth cone: " .. ID .. " Parent: " .. sourceID)
 
     elseif eventDescription == "excited_neuron" then
         if sourceID == parent_soma_id then
