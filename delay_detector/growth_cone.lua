@@ -29,6 +29,7 @@ Math = require "ranalib_math"
 
 -- Agent properties
 move = false
+parent_soma_id = -1
 
 -- Neuron properties
 axon_link_length = 5
@@ -134,11 +135,13 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         end
 
     elseif eventDescription == "assign_group" then
-        Agent.joinGroup(sourceID)
+        parent_soma_id = sourceID
 
     elseif eventDescription == "excited_neuron" then
-        excited = true
-        excited_neuron_time = absolute_time
+        if sourceID == parent_soma_id then
+            excited = true
+            excited_neuron_time = absolute_time
+        end
     end
 
 end
