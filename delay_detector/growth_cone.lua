@@ -31,6 +31,7 @@ Math = require "ranalib_math"
 move = false
 parent_soma_id = -1
 init = true
+initial_axon_link = true
 
 -- Neuron properties
 axon_link_length = 5
@@ -76,8 +77,12 @@ function takeStep()
     
     -- When the growth cone has travelled enough distance, a new axon segment
     -- agent is created.
-	if distance > axon_link_length then
-        new_agent = Agent.addAgent("axon.lua", coords.x2, coords.y2)
+    if distance > axon_link_length then
+        if not initial_axon_link then
+            new_agent = Agent.addAgent("axon.lua", coords.x2, coords.y2)
+        else
+            initial_axon_link = false
+        end
         coords.x2 = PositionX
         coords.y2 = PositionY
 	end

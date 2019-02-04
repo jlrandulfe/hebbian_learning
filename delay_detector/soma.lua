@@ -51,16 +51,7 @@ end
 function takeStep()
 
     if init == true then
-        -- Add the first axon agent
-        axon_centre_x = PositionX + (axon_link_length+1)/2
-        axon_centre_y = PositionY
-        Agent.addAgent("axon.lua", axon_centre_x, axon_centre_y)
-
-        -- Add the growth cone agent
-        growth_cone_x = axon_centre_x + (axon_link_length+1)/2
-        growth_cone_y = axon_centre_y
-        new_agent = Agent.addAgent("growth_cone.lua", growth_cone_x,
-                                   growth_cone_y)
+        new_agent = Agent.addAgent("growth_cone.lua", PositionX, PositionY)
         init = false
     end
 
