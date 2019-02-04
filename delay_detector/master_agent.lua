@@ -32,7 +32,7 @@ agents = {}
 -- Time variables
 T_trigger = {}
 Tn = 0
-neuron_delay = 100 * 1e-3   -- [s]
+neuron_delay = 20 * 1e-3   -- [s]
 period = 1000 * 1e-3        -- [s]
 
 function linear_layout(index)

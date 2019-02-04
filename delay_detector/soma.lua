@@ -28,8 +28,6 @@ Map = require "ranalib_map"
 Event = require "ranalib_event"
 
 
-axon_link_length = 5
-
 init = true
 
 function initializeAgent()

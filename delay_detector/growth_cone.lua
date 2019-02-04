@@ -34,12 +34,16 @@ init = true
 initial_axon_link = true
 
 -- Neuron properties
-axon_link_length = 5
+axon_link_length = 2
 connected = false
 excited = false
 excitation_level = 0
+
+-- Hebbian learning parameters
+amp = 1
 min_time_diff = 0.0
 max_time_diff = 0.12
+tau = 0.02
 
 absolute_time = 0
 excited_neuron_time = 0
@@ -154,7 +158,8 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         end
         if valid_source then
             if valid_time then
-                local intensity = 1
+                -- Hebb's learning rule.
+                local intensity = amp * math.exp(-math.abs(time_diff)/tau)
                 pulses_table[sourceID] = {sourceX, sourceY, intensity}
             else
                 pulses_table[sourceID] = {sourceX, sourceY, 0}
