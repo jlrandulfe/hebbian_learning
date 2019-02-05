@@ -27,6 +27,10 @@ Event = require "ranalib_event"
 Move = require "ranalib_movement"
 Math = require "ranalib_math"
 
+
+-- Environment properties
+env_noise_mean = 50
+
 -- Agent properties
 move = false
 parent_soma_id = -1
@@ -126,6 +130,12 @@ function takeStep()
             vx = vx + orientationX*values[3]
             vy = vy + orientationY*values[3]
         end
+        -- Environment noise.
+        local env_noise_angle = Stat.randomFloat(0, 2*math.pi)
+        local env_noise_amp = Stat.gaussianFloat(0, env_noise_mean)
+        vx = vx + (env_noise_amp * math.cos(env_noise_angle))
+        vy = vy + (env_noise_amp * math.sin(env_noise_angle))
+
     else
         vx = 0
         vy = 0
