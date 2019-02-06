@@ -35,8 +35,9 @@ absolute_time = 0
 synapse_time = 0
 
 -- Neuron parameters
+intensity = 1
 if true then
-    poisson_noise = Stat.randomInteger(0, 40)
+    poisson_noise = Stat.randomInteger(0, 1)
 else
     poisson_noise = 0
 end
@@ -65,7 +66,7 @@ function takeStep()
 
     if (absolute_time > synapse_time+process_noise) and synapse then
         Event.emit{speed=0, description="excited_neuron", targetGroup=ID}
-        Event.emit{speed=0, description="electric_pulse"}
+        Event.emit{speed=0, description="electric_pulse", table={intensity}}
         synapse = false
     end
 

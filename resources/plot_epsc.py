@@ -55,6 +55,8 @@ def main(tau=10):
     format_plotting()
     plt.plot(t, data)
     plt.grid()
+    plt.xlabel("Time difference [ms]")
+    plt.ylabel("EPSC amplitude")
     script_path = os.path.dirname(os.path.realpath(__file__))
     plt.savefig('{}/epsc_plot.eps'.format(script_path), bbox_inches='tight')
     plt.show()

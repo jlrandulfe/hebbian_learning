@@ -24,7 +24,11 @@
 Event = require "ranalib_event"
 Agent = require "ranalib_agent"
 
-local intensity = 0
+local intensity = 10
+-- Time variables
+period = 1020 * 1e-3        -- [s]
+absolute_time = 0
+trigger_time = 0
 
 function initializeAgent()
 
@@ -36,8 +40,12 @@ end
 
 function takeStep()
 
-    -- Event for sending an electric pulse to the neurons
-    Event.emit{speed=0, description="electric_pulse", table={intensity}}
+    -- Keep track of time, and send eletric pulses events based on the period
+    absolute_time = absolute_time + STEP_RESOLUTION       -- [s]
+    if absolute_time > trigger_time then
+        Event.emit{speed=0, description="electric_pulse", table={intensity}}
+        trigger_time = trigger_time + period
+    end
     
 end
 

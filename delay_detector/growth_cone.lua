@@ -167,13 +167,14 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
             valid_time = false
         end
         if valid_source then
+            local intensity = eventTable[1]
             if valid_time then
                 -- Hebb's learning rule.
-                local intensity = amp * math.exp(-math.abs(time_diff)/tau)
-                pulses_table[sourceID] = {sourceX, sourceY, intensity}
+                intensity = intensity * amp * math.exp(-math.abs(time_diff)/tau)
             else
-                pulses_table[sourceID] = {sourceX, sourceY, 0}
+                intensity = intensity * 0.01
             end
+            pulses_table[sourceID] = {sourceX, sourceY, intensity}
         end
 
     elseif eventDescription == "assign_group" then

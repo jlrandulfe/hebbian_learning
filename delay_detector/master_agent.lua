@@ -35,19 +35,6 @@ Tn = 0
 neuron_delay = 20 * 1e-3   -- [s]
 period = 1000 * 1e-3        -- [s]
 
-function linear_layout(index)
-    agent_x = index*ENV_WIDTH / (n_neurons+2)
-    agent_y = ENV_HEIGHT / 2
-    agents[index] = Agent.addAgent("soma.lua", agent_x, agent_y)
-end
-
-function circular_layout(index, radius)
-    max_angle = 3*math.pi / 2
-    angle = (max_angle/n_neurons) * (index-1)
-    agent_x = ENV_WIDTH/2 + radius*math.sin(angle)
-    agent_y = ENV_HEIGHT/2 + radius*math.cos(angle)
-    agents[index] = Agent.addAgent("soma.lua", agent_x, agent_y)
-end
 
 function initializeAgent()
     say("Master Agent#: " .. ID .. " has been initialized")
@@ -61,6 +48,8 @@ function initializeAgent()
         T_trigger[i] = Tn +  i * neuron_delay
     end
 
+    pulse_agent = Agent.addAgent("pulse_generator.lua", ENV_WIDTH-10,
+                                 ENV_HEIGHT-10)
 end
 
 
@@ -76,6 +65,21 @@ function takeStep()
             T_trigger[i] = T_trigger[i] + period
         end
     end
+end
+
+
+function linear_layout(index)
+    agent_x = index*ENV_WIDTH / (n_neurons+2)
+    agent_y = ENV_HEIGHT / 2
+    agents[index] = Agent.addAgent("soma.lua", agent_x, agent_y)
+end
+
+function circular_layout(index, radius)
+    max_angle = 3*math.pi / 2
+    angle = (max_angle/n_neurons) * (index-1)
+    agent_x = ENV_WIDTH/2 + radius*math.sin(angle)
+    agent_y = ENV_HEIGHT/2 + radius*math.cos(angle)
+    agents[index] = Agent.addAgent("soma.lua", agent_x, agent_y)
 end
 
 
