@@ -29,7 +29,7 @@ Math = require "ranalib_math"
 
 
 -- Environment properties
-env_noise_mean = 50
+env_noise_mean = 10
 
 -- Agent properties
 move = false
@@ -149,8 +149,8 @@ end
 function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
 
     if eventDescription == "electric_pulse" then
-        -- Ignore the pulse if parent-child relationship is not initialized
-        -- nor the received pulse is from parent
+        -- Ignore the pulse if parent-child relationship is not initialized,
+        -- nor if the received pulse is from parent
         if sourceID == parent_soma_id or parent_soma_id == -1 then
             valid_source = false
         else
@@ -191,5 +191,4 @@ end
 
 
 function cleanUp()
-	say("Agent #: " .. ID .. " is done\n")
 end

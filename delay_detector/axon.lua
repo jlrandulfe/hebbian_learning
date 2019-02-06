@@ -31,7 +31,6 @@ function initializeAgent()
 
     Agent.changeColor{b=255}
     -- Initialize the soma at the middle of the map
-    say("Axon Agent#: " .. ID .. " has been initialized")
 
 	Speed = 0
 	GridMove = true
@@ -45,5 +44,4 @@ end
 
 
 function cleanUp()
-	say("Agent #: " .. ID .. " is done\n")
 end

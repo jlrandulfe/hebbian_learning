@@ -30,17 +30,30 @@ Event = require "ranalib_event"
 
 init = true
 
+-- Timing variables
+absolute_time = 0
+synapse_time = 0
+
+-- Neuron parameters
+if true then
+    poisson_noise = Stat.randomInteger(0, 40)
+else
+    poisson_noise = 0
+end
+
+-- poisson_noise = Stat.randomInteger(5, 30)
+synapse = false
+process_noise = 0
+
 function initializeAgent()
 
     Agent.changeColor{r=255}
     Agent.joinGroup(ID)
     -- Initialize the soma at the middle of the map
     say("Soma Agent#: " .. ID .. " has been initialized")
-    
+    say("Agent " .. ID .. ". Noise = " .. poisson_noise)
+
     Move.to{x= ENV_WIDTH/2, y= ENV_HEIGHT/2}
-    
-	Speed = 0
-	GridMove = true
     Moving = false
 
 end
@@ -48,7 +61,15 @@ end
 
 function takeStep()
 
-    if init == true then
+    absolute_time = absolute_time + STEP_RESOLUTION
+
+    if (absolute_time > synapse_time+process_noise) and synapse then
+        Event.emit{speed=0, description="excited_neuron", targetGroup=ID}
+        Event.emit{speed=0, description="electric_pulse"}
+        synapse = false
+    end
+
+    if init then
         new_agent = Agent.addAgent("growth_cone.lua", PositionX, PositionY)
         init = false
     end
@@ -59,8 +80,9 @@ end
 function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
 
     if eventDescription == "synapse" then
-        Event.emit{speed=0, description="excited_neuron", targetGroup=ID}
-        Event.emit{speed=0, description="electric_pulse"}
+        synapse_time = absolute_time
+        process_noise = Stat.poissonFloat(poisson_noise) * 1e-3
+        synapse = true
     end
     if eventDescription == "cone_init" and sourceID == new_agent then
         Event.emit{speed=0, description="assign_group", targetID=new_agent}
@@ -68,5 +90,4 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
 end
 
 function cleanUp()
-	say("Agent #: " .. ID .. " is done\n")
 end

@@ -80,5 +80,4 @@ end
 
 
 function cleanUp()
-	say("Agent #: " .. ID .. " is done\n")
 end
