@@ -45,6 +45,7 @@ excitation_level = 0
 
 -- Hebbian learning parameters
 amp = 1
+negative_amp = 0.6
 min_time_diff = 0.0
 max_time_diff = 0.12
 tau = 0.02
@@ -173,7 +174,8 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
             else
                 intensity = intensity * 0.01
             end
-            pulses_table[sourceID] = {sourceX, sourceY, intensity}
+            pulses_table[sourceID] = {sourceX, sourceY, intensity,
+                                      received_pulse_time}
         end
 
     elseif eventDescription == "assign_group" then
@@ -189,6 +191,18 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         if sourceID == parent_soma_id then
             excited = true
             excited_neuron_time = absolute_time
+            for key, values in pairs(pulses_table) do
+                pulse_time = values[4]
+                time_diff = excited_neuron_time - pulse_time
+                if time_diff < max_time_diff then
+                    -- Hebbian rule negative side
+                    local intensity = 1
+                    intensity = intensity * negative_amp * (
+                            -math.exp(-math.abs(time_diff)/tau))
+                    pulses_table[key] = {values[1], values[2], intensity,
+                                         values[4]}
+                end
+            end
         end
     end
 
