@@ -52,10 +52,8 @@ function initializeAgent()
 
     Agent.changeColor{r=255}
     Agent.joinGroup(ID)
-    -- Initialize the soma at the middle of the map
-    say("Soma Agent#: " .. ID .. " has been initialized")
-    say("Agent " .. ID .. ". Noise = " .. poisson_noise)
 
+    -- Initialize the soma at the middle of the map
     Move.to{x= ENV_WIDTH/2, y= ENV_HEIGHT/2}
     Moving = false
 

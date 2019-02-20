@@ -58,7 +58,7 @@ function initializeAgent()
 
     Agent.changeColor{g=255}
     -- Initialize the soma at the middle of the map
-    say("Growth cone Agent#: " .. ID .. " has been initialized")
+    -- say("Growth cone Agent#: " .. ID .. " has been initialized")
 
 	Speed = 100
 	GridMove = true
@@ -185,7 +185,8 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         if movement == 0 then
             connected = true
         end
-        say("Growth cone: " .. ID .. " Parent: " .. sourceID)
+        Event.emit{speed=0,description="cone_connection",
+                   table={["cone_id"]=ID, ["parent_id"]=sourceID}}
 
     elseif eventDescription == "excited_neuron" then
         if sourceID == parent_soma_id then

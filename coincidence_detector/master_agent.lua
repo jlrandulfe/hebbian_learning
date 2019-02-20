@@ -28,6 +28,7 @@ Event = require "ranalib_event"
 -- Agents parameters
 agents = {}
 n_neurons = 3
+connections_table = {}
 
 -- Time variables
 T_trigger = {}
@@ -51,6 +52,13 @@ function initializeAgent()
 
     pulse_agent = Agent.addAgent("pulse_generator.lua", ENV_WIDTH-10,
                                  ENV_HEIGHT-10)
+
+end
+
+
+function script_path()
+    local str = debug.getinfo(2, "S").source:sub(2)
+    return str:match("(.*/)")
 end
 
 
@@ -69,5 +77,26 @@ function takeStep()
 end
 
 
+function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
+
+    if eventDescription == "cone_connection" then
+        cone_id = eventTable["cone_id"]
+        parent_id = eventTable["parent_id"]
+        connections_table[cone_id] = parent_id
+    end
+
+end
+
+
 function cleanUp()
+    -- Open output file
+    file = io.open(script_path().."/log/connections"..ID..".csv", "w")
+
+    -- Write some information to the file
+    file:write("Cone ID,Parent ID\n")
+    for index, value in pairs(connections_table) do
+        file:write(index..","..value.."\n")
+    end
+
+    file:close()
 end

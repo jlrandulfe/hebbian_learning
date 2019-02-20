@@ -32,7 +32,6 @@ trigger_time = 0
 
 function initializeAgent()
 
-    say("Pulse generator #: " .. ID .. " has been initialized")
     Agent.changeColor{r=255, g=255, b=255}
 
 end
@@ -60,5 +59,4 @@ end
 
 
 function cleanUp()
-	say("Agent #: " .. ID .. " is done\n")
 end
