@@ -76,7 +76,6 @@ function takeStep()
 
     if init == true then
         Event.emit{speed=0, description="cone_init"}
-        init = false
     end
 
     -- Get the distance from the last location where an axon agent was created.
@@ -177,6 +176,7 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         end
 
     elseif eventDescription == "assign_group" then
+        init = false
         parent_soma_id = sourceID
         movement = eventTable[1]
         -- If a 0 is received, the growth cone is static and does not grow
