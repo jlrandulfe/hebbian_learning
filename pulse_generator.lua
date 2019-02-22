@@ -24,7 +24,7 @@
 Event = require "ranalib_event"
 Agent = require "ranalib_agent"
 
-local intensity = 10
+local intensity = 2
 -- Time variables
 period = 1020 * 1e-3        -- [s]
 absolute_time = 0

@@ -65,9 +65,10 @@ function initializeAgent()
 
     -- Coordinates tracker, for creating new axon agents
     coords = {x1=PositionX, y1=PositionY, x2=PositionX, y2=PositionY}
-    -- Table containing info about the coordinates and intensity of incomming
-    -- electric pulses.
+    -- Tables containing info about the coordinates and towards incomming
+    -- electric pulses, and the raw data of such pulses.
     pulses_table = {}
+    received_pulses = {}
 end
 
 
@@ -87,7 +88,7 @@ function takeStep()
     -- agent is created.
     if distance > axon_link_length then
         if not initial_axon_link then
-            new_agent = Agent.addAgent("axon.lua", coords.x2, coords.y2)
+            new_agent = Agent.addAgent("spine.lua", coords.x2, coords.y2)
         else
             initial_axon_link = false
         end
@@ -169,13 +170,10 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         if valid_source then
             local intensity = eventTable[1]
             if valid_time then
-                -- Hebb's learning rule.
-                intensity = intensity * amp * math.exp(-math.abs(time_diff)/tau)
-            else
-                intensity = intensity * 0.01
+                -- Hebbian learning negative side
             end
-            pulses_table[sourceID] = {sourceX, sourceY, intensity,
-                                      received_pulse_time}
+            received_pulses[sourceID] = {sourceX, sourceY, intensity,
+                                         received_pulse_time}
         end
 
     elseif eventDescription == "assign_group" then
@@ -192,17 +190,19 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         if sourceID == parent_soma_id then
             excited = true
             excited_neuron_time = absolute_time
-            for key, values in pairs(pulses_table) do
+            for key, values in pairs(received_pulses) do
                 pulse_time = values[4]
+                local intensity = values[3]
                 time_diff = excited_neuron_time - pulse_time
                 if time_diff < max_time_diff then
-                    -- Hebbian rule negative side
-                    local intensity = 1
-                    intensity = intensity * negative_amp * (
-                            -math.exp(-math.abs(time_diff)/tau))
-                    pulses_table[key] = {values[1], values[2], intensity,
-                                         values[4]}
+                    -- Hebbian rule positive side
+                    intensity = intensity * amp * math.exp(
+                            -math.abs(time_diff)/tau)
+                else
+                    intensity = intensity * 0.01
                 end
+                pulses_table[key] = {values[1], values[2], intensity,
+                                     values[4]}
             end
         end
     end
