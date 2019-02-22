@@ -36,6 +36,8 @@ synapse_time = 0
 
 -- Neuron parameters
 intensity = 1
+-- Set movement to 0 for a static growth cone
+movement = 1
 if true then
     poisson_noise = Stat.randomInteger(0, 1)
 else
@@ -50,12 +52,15 @@ function initializeAgent()
 
     Agent.changeColor{r=255}
     Agent.joinGroup(ID)
-    -- Initialize the soma at the middle of the map
-    say("Soma Agent#: " .. ID .. " has been initialized")
-    say("Agent " .. ID .. ". Noise = " .. poisson_noise)
 
+    -- Initialize the soma at the middle of the map
     Move.to{x= ENV_WIDTH/2, y= ENV_HEIGHT/2}
     Moving = false
+
+    -- -- Inhibit movement on the 3rd neuron. For the coincidence detector
+    -- if ID==4 then
+    --     movement = 0
+    -- end
 
 end
 
@@ -86,7 +91,8 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         synapse = true
     end
     if eventDescription == "cone_init" and sourceID == new_agent then
-        Event.emit{speed=0, description="assign_group", targetID=new_agent}
+        Event.emit{speed=0, description="assign_group", targetID=new_agent,
+                   table={movement}}
     end
 end
 

@@ -25,9 +25,11 @@ Agent = require "ranalib_agent"
 Stat = require "ranalib_statistic"
 Event = require "ranalib_event"
 
--- Agents parameters
-n_neurons = 8
+-- Network parameters
+network = "delay_detector"
 agents = {}
+n_neurons = 8
+connections_table = {}
 
 -- Time variables
 T_trigger = {}
@@ -41,15 +43,37 @@ function initializeAgent()
     PositionX = -1
     PositionY = -1
 
-    -- Create N neurons, and get their IDs in a list
-    for i=1, n_neurons do
-        circular_layout(i, ENV_WIDTH/3)
-        -- Set the inital trigger times for the different neurons
-        T_trigger[i] = Tn +  i * neuron_delay
+    if network=="coincidence_detector" then
+        n_neurons = 3
+        -- Create a 3 neurons layout, and get their IDs in a list
+        agents[1] = Agent.addAgent("soma.lua", ENV_WIDTH*0.1, ENV_HEIGHT*0.4)
+        T_trigger[1] = Tn
+        agents[2] = Agent.addAgent("soma.lua", ENV_WIDTH*0.1, ENV_HEIGHT*0.6)
+        T_trigger[2] = Tn
+        agents[3] = Agent.addAgent("soma.lua", ENV_WIDTH*0.8, ENV_HEIGHT*0.5)
+        T_trigger[3] = Tn + neuron_delay
+
+    elseif network=="delay_detector" then
+        -- Create N neurons, and get their IDs in a list
+        for i=1, n_neurons do
+            circular_layout(i, ENV_WIDTH/3)
+            -- Set the inital trigger times for the different neurons
+            T_trigger[i] = Tn +  i * neuron_delay
+        end
+
+    else
+        say("Invalid network: " .. network)
     end
 
     pulse_agent = Agent.addAgent("pulse_generator.lua", ENV_WIDTH-10,
                                  ENV_HEIGHT-10)
+
+end
+
+
+function script_path()
+    local str = debug.getinfo(2, "S").source:sub(2)
+    return str:match("(.*/)")
 end
 
 
@@ -65,6 +89,17 @@ function takeStep()
             T_trigger[i] = T_trigger[i] + period
         end
     end
+end
+
+
+function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
+
+    if eventDescription == "cone_connection" then
+        cone_id = eventTable["cone_id"]
+        parent_id = eventTable["parent_id"]
+        connections_table[cone_id] = parent_id
+    end
+
 end
 
 
@@ -84,4 +119,14 @@ end
 
 
 function cleanUp()
+    -- Open output file
+    file = io.open(script_path().."/log/connections"..ID..".csv", "w")
+
+    -- Write some information to the file
+    file:write("Cone ID,Parent ID\n")
+    for index, value in pairs(connections_table) do
+        file:write(index..","..value.."\n")
+    end
+
+    file:close()
 end
