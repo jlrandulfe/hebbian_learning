@@ -29,19 +29,25 @@ Math = require "ranalib_math"
 
 
 -- Environment properties
-env_noise_mean = 10
+env_noise_mean = 0
 
 -- Agent properties
 move = false
 parent_soma_id = -1
 init = false
 initial_spine_link = true
+step = 0
+-- Multiplying factor for emitting float numbers
+conv_factor = 100000
 
 -- Neuron properties
 spine_link_length = 2
 connected = false
 excited = false
 excitation_level = 0
+vx = 0
+vy = 0
+kinematics_table = {["vx"]={}, ["vy"]={}, ["ax"]={}, ["ay"]={}}
 
 -- Hebbian learning parameters
 amp = 1
@@ -73,17 +79,38 @@ end
 
 
 function takeStep()
-
     absolute_time = absolute_time + STEP_RESOLUTION
+    step = step + 1
 
     if not init then
         Event.emit{speed=0, description="cone_init"}
     else
         -- Create a spine agent, if necessary
         create_spine_agent()
+
         -- Set the growth cone velocity based on the electric pulse sources
-        vx, vy = get_velocity()
+        ax, ay = get_acceleration()
+        if connected then
+            vx = 0
+            vy = 0
+        else
+            vx = vx + ax*STEP_RESOLUTION
+            vy = vy + ay*STEP_RESOLUTION
+        end
         Move.setVelocity{x=vx, y=vy}
+
+        if math.fmod(step, 10) == 0 then
+            table.insert(kinematics_table["vx"], math.floor(conv_factor*vx+0.5))
+            table.insert(kinematics_table["vy"], math.floor(conv_factor*vy+0.5))
+            table.insert(kinematics_table["ax"], math.floor(conv_factor*ax+0.5))
+            table.insert(kinematics_table["ay"], math.floor(conv_factor*ay+0.5))
+            -- if ID == 14 then
+            --    say(vx)
+            --    say(math.floor(conv_factor*vx+0.5))
+            --    my_table = kinematics_table["vx"]
+            --    say(my_table[#my_table])
+            -- end
+        end
     end
 
 end
@@ -144,8 +171,7 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
                 else
                     intensity = intensity * 0.01
                 end
-                pulses_table[key] = {values[1], values[2], intensity,
-                                     values[4]}
+                pulses_table[key] = {values[1], values[2], intensity, values[4]}
             end
         end
     end
@@ -173,37 +199,41 @@ function create_spine_agent()
 end
 
 
-function get_velocity()
-    local vx = 0
-    local vy = 0
+function get_acceleration()
+    local ax = 0
+    local ay = 0
     if not connected then
         for key, values in pairs(pulses_table) do
-            -- Calculate the absolute distance and its X, Y decomposition
             dx = values[1] - PositionX
             dy = values[2] - PositionY
             distance = math.sqrt(math.pow(dx, 2)+math.pow(dy, 2))
-            if distance < 2 then
+            if distance < 3 then
                 say("Connected\n")
                 connected = true
+                if ID == 14 then
+                    Event.emit{speed=0, description="cone_kinematics",
+                               table=kinematics_table}
+                end
             end
             -- Calculate the unit vector pointing towards the source
-            orientationX = dx / distance
-            orientationY = dy / distance
+            orientationX = dx / math.pow(distance, 2)
+            orientationY = dy / math.pow(distance, 2)
             -- Get the velocity vector
-            vx = vx + orientationX*values[3]
-            vy = vy + orientationY*values[3]
+            ax = ax + orientationX*values[3]
+            ay = ay + orientationY*values[3]
         end
         -- Environment noise.
         local env_noise_angle = Stat.randomFloat(0, 2*math.pi)
         local env_noise_amp = Stat.gaussianFloat(0, env_noise_mean)
-        vx = vx + (env_noise_amp * math.cos(env_noise_angle))
-        vy = vy + (env_noise_amp * math.sin(env_noise_angle))
-
+        local env_noise_x = env_noise_amp*math.cos(env_noise_angle)
+        local env_noise_y = env_noise_amp*math.sin(env_noise_angle)
+        ax = ax + env_noise_x
+        ay = ay + env_noise_y
     else
-        vx = 0
-        vy = 0
+        ax = 0
+        ay = 0
     end
-    return vx, vy
+    return ax, ay
 end
 
 

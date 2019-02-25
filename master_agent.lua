@@ -30,12 +30,13 @@ network = "delay_detector"
 agents = {}
 n_neurons = 8
 connections_table = {}
+kinematics_table = {["vx"]={}, ["vy"]={}, ["ax"]={}, ["ay"]={}}
 
 -- Time variables
 T_trigger = {}
 Tn = 0
 neuron_delay = 20 * 1e-3   -- [s]
-period = 1000 * 1e-3        -- [s]
+period = 1000 * 1e-3       -- [s]
 
 
 function initializeAgent()
@@ -100,6 +101,16 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         connections_table[cone_id] = parent_id
     end
 
+    if eventDescription == "cone_kinematics" then
+        if sourceID == 14 then
+            kinematics_table = eventTable
+        end
+    end
+
+    if eventDescription == "test" then
+        say("Master: " .. eventTable["vx"])
+    end
+
 end
 
 
@@ -119,14 +130,24 @@ end
 
 
 function cleanUp()
-    -- Open output file
+    -- Write parent-children relationships to csv file
     file = io.open(script_path().."/log/connections"..ID..".csv", "w")
-
-    -- Write some information to the file
     file:write("Cone ID,Parent ID\n")
     for index, value in pairs(connections_table) do
         file:write(index..","..value.."\n")
     end
+    file:close()
 
+    -- Write kinematics data to csv file
+    file = io.open(script_path().."/log/kinematics"..ID..".csv", "w")
+    file:write("v_x,v_y,a_x,a_y\n")
+    v_x = kinematics_table["vx"]
+    v_y = kinematics_table["vy"]
+    a_x = kinematics_table["ax"]
+    a_y = kinematics_table["ay"]
+    for index=1,#v_x do
+        file:write(v_x[index] .. "," .. v_y[index] .. "," .. a_x[index]
+                   .. "," .. a_y[index] .. "\n")
+    end
     file:close()
 end
