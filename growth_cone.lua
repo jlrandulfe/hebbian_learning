@@ -28,8 +28,13 @@ Move = require "ranalib_movement"
 Math = require "ranalib_math"
 
 
+-- Experiment variables
+analyzed_soma = 8
+reg_rate = 10
+
 -- Environment properties
-env_noise_mean = 0
+env_noise_mean = 10
+drag_coef = 0.8
 
 -- Agent properties
 move = false
@@ -61,7 +66,6 @@ excited_neuron_time = 0
 received_pulse_time = 0
 
 function initializeAgent()
-
     Agent.changeColor{g=255}
     -- Initialize the soma at the middle of the map
     -- say("Growth cone Agent#: " .. ID .. " has been initialized")
@@ -89,30 +93,27 @@ function takeStep()
         create_spine_agent()
 
         -- Set the growth cone velocity based on the electric pulse sources
-        ax, ay = get_acceleration()
         if connected then
             vx = 0
             vy = 0
+            ax = 0
+            ay = 0
         else
+            ax_drag, ay_drag = get_drag_force(vx, vy)
+            ax, ay = get_acceleration(ax_drag, ay_drag)
             vx = vx + ax*STEP_RESOLUTION
             vy = vy + ay*STEP_RESOLUTION
         end
         Move.setVelocity{x=vx, y=vy}
 
-        if math.fmod(step, 10) == 0 then
+        -- Register kinematics data to table for further storage
+        if math.fmod(step, reg_rate)==0 and parent_soma_id==analyzed_soma then
             table.insert(kinematics_table["vx"], math.floor(conv_factor*vx+0.5))
             table.insert(kinematics_table["vy"], math.floor(conv_factor*vy+0.5))
             table.insert(kinematics_table["ax"], math.floor(conv_factor*ax+0.5))
             table.insert(kinematics_table["ay"], math.floor(conv_factor*ay+0.5))
-            -- if ID == 14 then
-            --    say(vx)
-            --    say(math.floor(conv_factor*vx+0.5))
-            --    my_table = kinematics_table["vx"]
-            --    say(my_table[#my_table])
-            -- end
         end
     end
-
 end
 
 
@@ -199,9 +200,9 @@ function create_spine_agent()
 end
 
 
-function get_acceleration()
-    local ax = 0
-    local ay = 0
+function get_acceleration(ax_drag, ay_drag)
+    local ax = ax_drag
+    local ay = ay_drag
     if not connected then
         for key, values in pairs(pulses_table) do
             dx = values[1] - PositionX
@@ -210,7 +211,7 @@ function get_acceleration()
             if distance < 3 then
                 say("Connected\n")
                 connected = true
-                if ID == 14 then
+                if parent_soma_id == analyzed_soma then
                     Event.emit{speed=0, description="cone_kinematics",
                                table=kinematics_table}
                 end
@@ -234,6 +235,21 @@ function get_acceleration()
         ay = 0
     end
     return ax, ay
+end
+
+
+function get_drag_force(vx, vy)
+    -- Get the modulus of the drag force.
+    fx_d = math.pow(vx, 2) * drag_coef
+    fy_d = math.pow(vy, 2) * drag_coef
+    -- Change the sign for positive speeds.
+    if vx >0 then
+        fx_d = -fx_d
+    end
+    if vy >0 then
+        fy_d = -fy_d
+    end
+    return fx_d, fy_d
 end
 
 

@@ -102,9 +102,7 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
     end
 
     if eventDescription == "cone_kinematics" then
-        if sourceID == 14 then
-            kinematics_table = eventTable
-        end
+        kinematics_table = eventTable
     end
 
     if eventDescription == "test" then
@@ -139,7 +137,7 @@ function cleanUp()
     file:close()
 
     -- Write kinematics data to csv file
-    file = io.open(script_path().."/log/kinematics"..ID..".csv", "w")
+    file = io.open(script_path().."/log/kinematics.csv", "w")
     file:write("v_x,v_y,a_x,a_y\n")
     v_x = kinematics_table["vx"]
     v_y = kinematics_table["vy"]
