@@ -31,9 +31,10 @@ Math = require "ranalib_math"
 -- Experiment variables
 analyzed_soma = 8
 reg_rate = 10
+record_kinematics = false
 
 -- Environment properties
-env_noise_mean = 10
+env_noise_mean = 0
 drag_coef = 0.8
 
 -- Agent properties
@@ -107,7 +108,8 @@ function takeStep()
         Move.setVelocity{x=vx, y=vy}
 
         -- Register kinematics data to table for further storage
-        if math.fmod(step, reg_rate)==0 and parent_soma_id==analyzed_soma then
+        if math.fmod(step, reg_rate)==0 and parent_soma_id==analyzed_soma
+                and record_kinematics then
             table.insert(kinematics_table["vx"], math.floor(conv_factor*vx+0.5))
             table.insert(kinematics_table["vy"], math.floor(conv_factor*vy+0.5))
             table.insert(kinematics_table["ax"], math.floor(conv_factor*ax+0.5))
@@ -154,7 +156,7 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         if movement == 0 then
             connected = true
         end
-        Event.emit{speed=0,description="cone_connection",
+        Event.emit{speed=0,description="cone_parent",
                    table={["cone_id"]=ID, ["parent_id"]=sourceID}}
 
     elseif eventDescription == "excited_neuron" then
@@ -209,9 +211,10 @@ function get_acceleration(ax_drag, ay_drag)
             dy = values[2] - PositionY
             distance = math.sqrt(math.pow(dx, 2)+math.pow(dy, 2))
             if distance < 3 then
-                say("Connected\n")
                 connected = true
-                if parent_soma_id == analyzed_soma then
+                Event.emit{speed=0, description="cone_connected",
+                           table={key, parent_soma_id}}
+                if parent_soma_id==analyzed_soma and record_kinematics then
                     Event.emit{speed=0, description="cone_kinematics",
                                table=kinematics_table}
                 end

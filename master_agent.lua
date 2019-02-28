@@ -31,6 +31,8 @@ agents = {}
 n_neurons = 8
 connections_table = {}
 kinematics_table = {["vx"]={}, ["vy"]={}, ["ax"]={}, ["ay"]={}}
+final_connections = {}
+desired_connections = {}
 
 -- Time variables
 T_trigger = {}
@@ -95,7 +97,7 @@ end
 
 function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
 
-    if eventDescription == "cone_connection" then
+    if eventDescription == "cone_parent" then
         cone_id = eventTable["cone_id"]
         parent_id = eventTable["parent_id"]
         connections_table[cone_id] = parent_id
@@ -105,8 +107,10 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         kinematics_table = eventTable
     end
 
-    if eventDescription == "test" then
-        say("Master: " .. eventTable["vx"])
+    if eventDescription == "cone_connected" then
+        dest_id = eventTable[1]
+        parent_id = eventTable[2]
+        final_connections[parent_id] = dest_id
     end
 
 end
@@ -124,16 +128,33 @@ function circular_layout(index, radius)
     agent_x = ENV_WIDTH/2 + radius*math.sin(angle)
     agent_y = ENV_HEIGHT/2 + radius*math.cos(angle)
     agents[index] = Agent.addAgent("soma.lua", agent_x, agent_y)
+    -- Tables with the goal and current neuron connections
+    if index>1 then
+        desired_connections[agents[index]] = agents[index-1]
+    else
+        desired_connections[agents[index]] = 0
+    end
+    final_connections[agents[index]] = 0
 end
 
 
 function cleanUp()
-    -- Write parent-children relationships to csv file
-    file = io.open(script_path().."/log/connections"..ID..".csv", "w")
-    file:write("Cone ID,Parent ID\n")
-    for index, value in pairs(connections_table) do
-        file:write(index..","..value.."\n")
+    -- Get the success rate and save it to file
+    file = io.open(script_path().."/log/connections.csv", "w")
+    file:write("Origin soma;Destination soma;Success\n")
+    final_success = 0
+    for index, value in pairs(desired_connections) do
+        if final_connections[index] == value then
+            success = 1
+        else
+            success = 0
+        end
+        final_success = final_success + success
+        file:write(index..";"..value..";"..success.."\n")
     end
+    success_rate = final_success / #desired_connections
+    file:write(";Suc. rate;"..success_rate.."\n")
+
     file:close()
 
     -- Write kinematics data to csv file
