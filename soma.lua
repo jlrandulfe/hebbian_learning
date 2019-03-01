@@ -36,6 +36,7 @@ synapse_time = 0
 
 -- Neuron parameters
 intensity = 1
+connected_somas = {}
 -- Set movement to 0 for a static growth cone
 movement = 1
 if false then
@@ -92,9 +93,11 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
     end
     if eventDescription=="cone_init" and sourceID==new_agent then
         Event.emit{speed=0, description="assign_group", targetID=new_agent,
-                   table={movement}}
+                   table={movement, connected_somas}}
     end
     if eventDescription=="cone_connected" and sourceID==new_agent then
+        dest_id = eventTable[1]
+        connected_somas[dest_id] = 1
         init = true
     end
 end

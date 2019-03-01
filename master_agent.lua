@@ -49,9 +49,9 @@ function initializeAgent()
     if network=="coincidence_detector" then
         n_neurons = 3
         -- Create a 3 neurons layout, and get their IDs in a list
-        agents[1] = Agent.addAgent("soma.lua", ENV_WIDTH*0.4, ENV_HEIGHT*0.4)
+        agents[1] = Agent.addAgent("soma.lua", ENV_WIDTH*0.6, ENV_HEIGHT*0.4)
         T_trigger[1] = Tn
-        agents[2] = Agent.addAgent("soma.lua", ENV_WIDTH*0.1, ENV_HEIGHT*0.6)
+        agents[2] = Agent.addAgent("soma.lua", ENV_WIDTH*0.4, ENV_HEIGHT*0.6)
         T_trigger[2] = Tn
         agents[3] = Agent.addAgent("soma.lua", ENV_WIDTH*0.8, ENV_HEIGHT*0.5)
         T_trigger[3] = Tn + neuron_delay

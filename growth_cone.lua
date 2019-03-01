@@ -31,15 +31,15 @@ Math = require "ranalib_math"
 -- Experiment variables
 analyzed_soma = 4
 reg_rate = 100
-record_kinematics = true
+record_kinematics = false
 
 -- Environment properties
-env_noise_var = 0.1
+env_noise_var = 0.5
 drag_coef = 0.8
 
 -- Agent properties
 move = false
-parent_soma_id = -1
+parent_id = -1
 init = false
 initial_spine_link = true
 step = 0
@@ -54,11 +54,12 @@ excitation_level = 0
 vx = 0
 vy = 0
 kinematics_table = {["vx"]={}, ["vy"]={}, ["ax"]={}, ["ay"]={}}
+nonvalid_somas = {}
 
 -- Hebbian learning parameters
 amp = 1
 negative_amp = 0.6
-min_time_diff = 0.0
+min_time_diff = 0.01
 max_time_diff = 0.12
 tau = 0.02
 
@@ -108,7 +109,7 @@ function takeStep()
         Move.setVelocity{x=vx, y=vy}
 
         -- Register kinematics data to table for further storage
-        if math.fmod(step, reg_rate)==0 and parent_soma_id==analyzed_soma
+        if math.fmod(step, reg_rate)==0 and parent_id==analyzed_soma
                 and record_kinematics then
             table.insert(kinematics_table["vx"], math.floor(conv_factor*vx+0.5))
             table.insert(kinematics_table["vy"], math.floor(conv_factor*vy+0.5))
@@ -122,9 +123,9 @@ end
 function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
 
     if eventDescription == "electric_pulse" then
-        -- Ignore the pulse if parent-child relationship is not initialized,
-        -- nor if the received pulse is from parent
-        if sourceID == parent_soma_id or parent_soma_id == -1 then
+        -- Ignore the pulse if parent-child relationship is not set, nor if the
+        -- received pulse is from parent nor from an already connected soma.
+        if sourceID==parent_id or parent_id==-1 or nonvalid_somas[sourceID] then
             valid_source = false
         else
             valid_source = true
@@ -147,27 +148,31 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
             received_pulses[sourceID] = {sourceX, sourceY, intensity,
                                          received_pulse_time}
         end
+    end
 
-    elseif eventDescription == "assign_group" then
+    if eventDescription == "assign_group" then
         init = true
-        parent_soma_id = sourceID
+        parent_id = sourceID
         movement = eventTable[1]
         -- If a 0 is received, the growth cone is static and does not grow
         if movement == 0 then
             connected = true
         end
+        -- Retrieve the list of somas that have already been wired to the neuron
+        nonvalid_somas = eventTable[2]
         Event.emit{speed=0,description="cone_parent",
                    table={["cone_id"]=ID, ["parent_id"]=sourceID}}
+    end
 
-    elseif eventDescription == "excited_neuron" then
-        if sourceID == parent_soma_id then
+    if eventDescription == "excited_neuron" then
+        if sourceID == parent_id then
             excited = true
             excited_neuron_time = absolute_time
             for key, values in pairs(received_pulses) do
                 pulse_time = values[4]
                 local intensity = values[3]
                 time_diff = excited_neuron_time - pulse_time
-                if time_diff < max_time_diff then
+                if time_diff > min_time_diff and time_diff < max_time_diff then
                     -- Hebbian rule positive side
                     intensity = intensity * amp * math.exp(
                             -math.abs(time_diff)/tau)
@@ -212,8 +217,8 @@ function get_acceleration(ax_drag, ay_drag)
             if distance < 3 then
                 connected = true
                 Event.emit{speed=0, description="cone_connected",
-                           table={key, parent_soma_id}}
-                if parent_soma_id==analyzed_soma and record_kinematics then
+                           table={key, parent_id}}
+                if parent_id==analyzed_soma and record_kinematics then
                     Event.emit{speed=0, description="cone_kinematics",
                                table=kinematics_table}
                 end
