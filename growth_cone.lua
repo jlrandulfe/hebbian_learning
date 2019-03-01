@@ -34,7 +34,7 @@ reg_rate = 10
 record_kinematics = false
 
 -- Environment properties
-env_noise_mean = 0
+env_noise_var = 1
 drag_coef = 0.8
 
 -- Agent properties
@@ -228,7 +228,7 @@ function get_acceleration(ax_drag, ay_drag)
         end
         -- Environment noise.
         local env_noise_angle = Stat.randomFloat(0, 2*math.pi)
-        local env_noise_amp = Stat.gaussianFloat(0, env_noise_mean)
+        local env_noise_amp = Stat.gaussianFloat(0, env_noise_var)
         local env_noise_x = env_noise_amp*math.cos(env_noise_angle)
         local env_noise_y = env_noise_amp*math.sin(env_noise_angle)
         ax = ax + env_noise_x

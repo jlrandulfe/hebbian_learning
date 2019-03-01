@@ -1,10 +1,17 @@
 agents = {
-     "/home/jalop17/01-scripts/08-Lua/hebbian_learning/coincidence_detector/master_agent.lua"
+     "/home/jalop17/01-scripts/08-Lua/hebbian_learning/master_agent.lua"
 }
+
+sim={
+     eDistPrecision = 0.000001,
+     stepPrecision  = 0.001,
+     runTime        = 1000,
+     mapWidth       = 200,
+     mapHeight      = 200,
+     mapScale       = 1.0,
+     simThreads     = 4,
+}
+
 param = {
-     {21},       -- Parameter '1', is a static parameter which is accessible by the agents.
-     {1,100},    -- Parameter '2', going from 1 to 100, with step increments of 1.
-     {1,0.1,10}, -- Parameter '3', going from 1 to 10, with step increments of 0.1.
-}
-sim = {
+     {1, 10},       -- Parameter '1', is a static parameter which is accessible by the agents.
 }
