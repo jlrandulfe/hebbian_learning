@@ -29,12 +29,12 @@ Math = require "ranalib_math"
 
 
 -- Experiment variables
-analyzed_soma = 8
-reg_rate = 10
-record_kinematics = false
+analyzed_soma = 4
+reg_rate = 100
+record_kinematics = true
 
 -- Environment properties
-env_noise_var = 1
+env_noise_var = 0.1
 drag_coef = 0.8
 
 -- Agent properties
@@ -178,7 +178,6 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
             end
         end
     end
-
 end
 
 

@@ -38,7 +38,7 @@ synapse_time = 0
 intensity = 1
 -- Set movement to 0 for a static growth cone
 movement = 1
-if true then
+if false then
     poisson_noise = Stat.randomInteger(0, 1)
 else
     poisson_noise = 0
@@ -85,14 +85,17 @@ end
 
 function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
 
-    if eventDescription == "synapse" then
+    if eventDescription=="synapse" then
         synapse_time = absolute_time
         process_noise = Stat.poissonFloat(poisson_noise) * 1e-3
         synapse = true
     end
-    if eventDescription == "cone_init" and sourceID == new_agent then
+    if eventDescription=="cone_init" and sourceID==new_agent then
         Event.emit{speed=0, description="assign_group", targetID=new_agent,
                    table={movement}}
+    end
+    if eventDescription=="cone_connected" and sourceID==new_agent then
+        init = true
     end
 end
 

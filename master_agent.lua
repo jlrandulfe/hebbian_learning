@@ -26,7 +26,7 @@ Stat = require "ranalib_statistic"
 Event = require "ranalib_event"
 
 -- Network parameters
-network = "delay_detector"
+network = "coincidence_detector"
 agents = {}
 n_neurons = 8
 connections_table = {}
@@ -49,7 +49,7 @@ function initializeAgent()
     if network=="coincidence_detector" then
         n_neurons = 3
         -- Create a 3 neurons layout, and get their IDs in a list
-        agents[1] = Agent.addAgent("soma.lua", ENV_WIDTH*0.1, ENV_HEIGHT*0.4)
+        agents[1] = Agent.addAgent("soma.lua", ENV_WIDTH*0.4, ENV_HEIGHT*0.4)
         T_trigger[1] = Tn
         agents[2] = Agent.addAgent("soma.lua", ENV_WIDTH*0.1, ENV_HEIGHT*0.6)
         T_trigger[2] = Tn
@@ -68,8 +68,8 @@ function initializeAgent()
         say("Invalid network: " .. network)
     end
 
-    pulse_agent = Agent.addAgent("pulse_generator.lua", ENV_WIDTH-10,
-                                 ENV_HEIGHT-10)
+    -- pulse_agent = Agent.addAgent("pulse_generator.lua", ENV_WIDTH-10,
+    --                              ENV_HEIGHT-10)
 
 end
 
@@ -152,9 +152,12 @@ function cleanUp()
         final_success = final_success + success
         file:write(index..";"..value..";"..success.."\n")
     end
-    success_rate = final_success / #desired_connections
+    if #desired_connections > 0 then
+        success_rate = final_success / #desired_connections
+    else
+        success_rate = -1
+    end
     file:write(";Suc. rate;"..success_rate.."\n")
-
     file:close()
 
     -- Write kinematics data to csv file
