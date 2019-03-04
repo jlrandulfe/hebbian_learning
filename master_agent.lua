@@ -26,13 +26,17 @@ Stat = require "ranalib_statistic"
 Event = require "ranalib_event"
 
 -- Network parameters
-network = "coincidence_detector"
+-- Possible networks: "delay_detector", "coincidence_detector",
+-- "leaky_propagation"
+network = "leaky_propagation"
 agents = {}
 n_neurons = 8
 connections_table = {}
 kinematics_table = {["vx"]={}, ["vy"]={}, ["ax"]={}, ["ay"]={}}
 final_connections = {}
 desired_connections = {}
+leaky_connections = {false, false}
+leaky_trigger_neuron_3 = true
 
 -- Time variables
 T_trigger = {}
@@ -64,6 +68,18 @@ function initializeAgent()
             T_trigger[i] = Tn +  i * neuron_delay
         end
 
+    elseif network=="leaky_propagation" then
+        n_neurons = 3
+        -- Create a 4 neurons layout, and get their IDs in a list
+        agents[1] = Agent.addAgent("soma.lua", ENV_WIDTH*0.6, ENV_HEIGHT*0.4)
+        T_trigger[1] = Tn
+        agents[2] = Agent.addAgent("soma.lua", ENV_WIDTH*0.5, ENV_HEIGHT*0.6)
+        T_trigger[2] = Tn
+        agents[3] = Agent.addAgent("soma.lua", ENV_WIDTH*0.7, ENV_HEIGHT*0.5)
+        T_trigger[3] = Tn + neuron_delay
+        agents[4] = Agent.addAgent("soma.lua", ENV_WIDTH*0.9, ENV_HEIGHT*0.5)
+        T_trigger[4] = Tn + 4*neuron_delay
+
     else
         say("Invalid network: " .. network)
     end
@@ -86,6 +102,8 @@ function takeStep()
     -- their corresponding delays.
     Tn = Tn + STEP_RESOLUTION       -- [s]
     for i=1, n_neurons do
+        -- Do not trigger the 3rd neuron in the Leaky network
+        -- after condition is met
         if Tn > T_trigger[i] then
             Event.emit{speed=0, description="synapse",
                        targetID=agents[i]}
@@ -111,6 +129,19 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         dest_id = eventTable[1]
         parent_id = eventTable[2]
         final_connections[parent_id] = dest_id
+        -- Check connection of intermediate neuron for Leaky network
+        if network=="leaky_propagation" and  parent_id==4 then
+            if dest_id==2 then
+                leaky_connections[1] = true
+            elseif dest_id==3 then
+                leaky_connections[2] = true
+            end
+        end
+        if leaky_connections[1] and leaky_connections[2] then
+            say("Sending pulses to neuron ID 5")
+            n_neurons = 4
+            leaky_trigger_neuron_3 = false
+        end
     end
 
 end

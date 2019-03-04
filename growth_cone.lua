@@ -40,6 +40,7 @@ drag_coef = 0.8
 -- Agent properties
 move = false
 parent_id = -1
+dest_id = -1
 init = false
 initial_spine_link = true
 step = 0
@@ -148,6 +149,11 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
             received_pulses[sourceID] = {sourceX, sourceY, intensity,
                                          received_pulse_time}
         end
+
+        -- If spine is connected, transmit the pulse through synapse.
+        if connected and sourceID==dest_id then
+            Event.emit{speed=0, description="synapse", targetID=parent_id}
+        end
     end
 
     if eventDescription == "assign_group" then
@@ -216,6 +222,7 @@ function get_acceleration(ax_drag, ay_drag)
             distance = math.sqrt(math.pow(dx, 2)+math.pow(dy, 2))
             if distance < 3 then
                 connected = true
+                dest_id = key
                 Event.emit{speed=0, description="cone_connected",
                            table={key, parent_id}}
                 if parent_id==analyzed_soma and record_kinematics then
