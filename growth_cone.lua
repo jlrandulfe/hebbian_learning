@@ -183,7 +183,7 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
                     intensity = intensity * amp * math.exp(
                             -math.abs(time_diff)/tau)
                 else
-                    intensity = intensity * 0.01
+                    intensity = 0
                 end
                 pulses_table[key] = {values[1], values[2], intensity, values[4]}
             end
