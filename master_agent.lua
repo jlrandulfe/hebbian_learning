@@ -37,6 +37,8 @@ final_connections = {}
 desired_connections = {}
 leaky_connections = {false, false}
 leaky_trigger_neuron_3 = true
+-- List with the neurons whose triggering has to be omitted
+inhibit_trigger = {}
 
 -- Time variables
 T_trigger = {}
@@ -69,7 +71,8 @@ function initializeAgent()
         end
 
     elseif network=="leaky_propagation" then
-        n_neurons = 3
+        inhibit_trigger[4]=1
+        n_neurons = 4
         -- Create a 4 neurons layout, and get their IDs in a list
         agents[1] = Agent.addAgent("soma.lua", ENV_WIDTH*0.6, ENV_HEIGHT*0.4)
         T_trigger[1] = Tn
@@ -102,12 +105,13 @@ function takeStep()
     -- their corresponding delays.
     Tn = Tn + STEP_RESOLUTION       -- [s]
     for i=1, n_neurons do
-        -- Do not trigger the 3rd neuron in the Leaky network
-        -- after condition is met
-        if Tn > T_trigger[i] then
-            Event.emit{speed=0, description="synapse",
-                       targetID=agents[i]}
-            T_trigger[i] = T_trigger[i] + period
+        -- Check if the neuron is in the inhibit list
+        if inhibit_trigger[i]~=1 then
+            if Tn > T_trigger[i] then
+                Event.emit{speed=0, description="synapse",
+                        targetID=agents[i]}
+                T_trigger[i] = T_trigger[i] + period
+            end
         end
     end
 end
@@ -139,8 +143,8 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         end
         if leaky_connections[1] and leaky_connections[2] then
             say("Sending pulses to neuron ID 5")
-            n_neurons = 4
-            leaky_trigger_neuron_3 = false
+            inhibit_trigger[3] = 1
+            inhibit_trigger[4] = -1
         end
     end
 
