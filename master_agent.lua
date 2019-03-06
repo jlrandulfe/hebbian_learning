@@ -42,7 +42,7 @@ inhibit_trigger = {}
 
 -- Time variables
 T_trigger = {}
-Tn = 0
+absolute_time = 0
 neuron_delay = 20 * 1e-3   -- [s]
 period = 1000 * 1e-3       -- [s]
 
@@ -56,18 +56,18 @@ function initializeAgent()
         n_neurons = 3
         -- Create a 3 neurons layout, and get their IDs in a list
         agents[1] = Agent.addAgent("soma.lua", ENV_WIDTH*0.6, ENV_HEIGHT*0.4)
-        T_trigger[1] = Tn
+        T_trigger[1] = absolute_time
         agents[2] = Agent.addAgent("soma.lua", ENV_WIDTH*0.4, ENV_HEIGHT*0.6)
-        T_trigger[2] = Tn
+        T_trigger[2] = absolute_time
         agents[3] = Agent.addAgent("soma.lua", ENV_WIDTH*0.8, ENV_HEIGHT*0.5)
-        T_trigger[3] = Tn + neuron_delay
+        T_trigger[3] = absolute_time + neuron_delay
 
     elseif network=="delay_detector" then
         -- Create N neurons, and get their IDs in a list
         for i=1, n_neurons do
             circular_layout(i, ENV_WIDTH/3)
             -- Set the inital trigger times for the different neurons
-            T_trigger[i] = Tn +  i * neuron_delay
+            T_trigger[i] = absolute_time +  i * neuron_delay
         end
 
     elseif network=="leaky_propagation" then
@@ -75,13 +75,13 @@ function initializeAgent()
         n_neurons = 4
         -- Create a 4 neurons layout, and get their IDs in a list
         agents[1] = Agent.addAgent("soma.lua", ENV_WIDTH*0.6, ENV_HEIGHT*0.4)
-        T_trigger[1] = Tn
-        agents[2] = Agent.addAgent("soma.lua", ENV_WIDTH*0.5, ENV_HEIGHT*0.6)
-        T_trigger[2] = Tn
+        T_trigger[1] = absolute_time
+        agents[2] = Agent.addAgent("soma.lua", ENV_WIDTH*0.55, ENV_HEIGHT*0.6)
+        T_trigger[2] = absolute_time
         agents[3] = Agent.addAgent("soma.lua", ENV_WIDTH*0.7, ENV_HEIGHT*0.5)
-        T_trigger[3] = Tn + neuron_delay
+        T_trigger[3] = absolute_time + neuron_delay
         agents[4] = Agent.addAgent("soma.lua", ENV_WIDTH*0.9, ENV_HEIGHT*0.5)
-        T_trigger[4] = Tn + 4*neuron_delay
+        T_trigger[4] = absolute_time + 2*neuron_delay
 
     else
         say("Invalid network: " .. network)
@@ -103,15 +103,15 @@ function takeStep()
 
     -- Keep track of time, and send excitations to each neuron depending on
     -- their corresponding delays.
-    Tn = Tn + STEP_RESOLUTION       -- [s]
+    absolute_time = absolute_time + STEP_RESOLUTION       -- [s]
     for i=1, n_neurons do
         -- Check if the neuron is in the inhibit list
-        if inhibit_trigger[i]~=1 then
-            if Tn > T_trigger[i] then
+        if absolute_time > T_trigger[i] then
+            if inhibit_trigger[i]~=1 then
                 Event.emit{speed=0, description="synapse",
-                        targetID=agents[i]}
-                T_trigger[i] = T_trigger[i] + period
+                           targetID=agents[i]}
             end
+            T_trigger[i] = T_trigger[i] + period
         end
     end
 end

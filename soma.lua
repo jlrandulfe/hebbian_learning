@@ -33,21 +33,25 @@ init = true
 -- Timing variables
 absolute_time = 0
 synapse_time = 0
+trigger_time = 0
 
 -- Neuron parameters
+neuron_delay = 20 * 1e-3   -- [s]
 intensity = 1
 connected_somas = {}
+-- Leaky model parameters
+C = 0.5             -- [nF]
+R = 40              -- [MOhms]
+tau = C*R * 1e-3    -- [s]
+U_rest = -70        -- [mV]
+U_current = -70     -- [mV]
+U_threshold = -54   -- [mV]
+delta_U = 15        -- [mV]
 -- Set movement to 0 for a static growth cone
 movement = 1
-if false then
-    poisson_noise = Stat.randomInteger(0, 1)
-else
-    poisson_noise = 0
-end
-
--- poisson_noise = Stat.randomInteger(5, 30)
-synapse = false
+poisson_noise = Stat.randomInteger(0, 0)
 process_noise = 0
+trigger = false
 
 function initializeAgent()
 
@@ -58,23 +62,38 @@ function initializeAgent()
     Move.to{x= ENV_WIDTH/2, y= ENV_HEIGHT/2}
     Moving = false
 
-    -- -- Inhibit movement on the 3rd neuron. For the coincidence detector
-    -- if ID==4 then
-    --     movement = 0
-    -- end
 
 end
 
 
 function takeStep()
 
-    absolute_time = absolute_time + STEP_RESOLUTION
+    absolute_time = absolute_time + STEP_RESOLUTION    -- [s]
 
-    if (absolute_time > synapse_time+process_noise) and synapse then
+    if trigger and absolute_time>trigger_time then
+        trigger = false
         Event.emit{speed=0, description="excited_neuron", targetGroup=ID}
         Event.emit{speed=0, description="electric_pulse", table={intensity}}
-        synapse = false
     end
+
+    if U_current>U_threshold and not trigger then
+        U_current = U_rest
+        trigger = true
+        trigger_time = absolute_time + neuron_delay
+    end
+
+    if U_current > U_rest*0.9 then
+        time_diff = absolute_time - synapse_time
+        U_current = U_rest + delta_U*math.exp(-time_diff/tau)
+    else
+        U_current = U_rest
+    end
+
+    -- if (absolute_time > synapse_time+process_noise) and synapse then
+    --     Event.emit{speed=0, description="excited_neuron", targetGroup=ID}
+    --     Event.emit{speed=0, description="electric_pulse", table={intensity}}
+    --     synapse = false
+    -- end
 
     if init then
         new_agent = Agent.addAgent("growth_cone.lua", PositionX, PositionY)
@@ -87,9 +106,16 @@ end
 function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
 
     if eventDescription=="synapse" then
-        synapse_time = absolute_time
-        process_noise = Stat.poissonFloat(poisson_noise) * 1e-3
-        synapse = true
+        -- Ignore synapses when the neuron triggering is being processed
+        if not trigger then
+            synapse_time = absolute_time
+            process_noise = Stat.poissonFloat(poisson_noise) * 1e-3
+            if sourceID==1 then
+                U_current = U_current + 2*delta_U
+            else
+                U_current = U_current + delta_U
+            end
+        end
     end
     if eventDescription=="cone_init" and sourceID==new_agent then
         Event.emit{speed=0, description="assign_group", targetID=new_agent,
