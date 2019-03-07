@@ -27,10 +27,11 @@ Event = require "ranalib_event"
 
 -- Network parameters
 -- Possible networks: "delay_detector", "coincidence_detector",
--- "leaky_propagation"
-network = "leaky_propagation"
+-- "leaky_propagation", "reservoir"
+network = "reservoir"
 agents = {}
-n_neurons = 8
+-- For reservoir, choose a value that allows to get n_neurons=5*N+1
+n_neurons = 26
 connections_table = {}
 kinematics_table = {["vx"]={}, ["vy"]={}, ["ax"]={}, ["ay"]={}}
 final_connections = {}
@@ -65,7 +66,7 @@ function initializeAgent()
     elseif network=="delay_detector" then
         -- Create N neurons, and get their IDs in a list
         for i=1, n_neurons do
-            circular_layout(i, ENV_WIDTH/3)
+            circular_layout(i, ENV_WIDTH/3, n_neurons)
             -- Set the inital trigger times for the different neurons
             T_trigger[i] = absolute_time +  i * neuron_delay
         end
@@ -82,6 +83,33 @@ function initializeAgent()
         T_trigger[3] = absolute_time + neuron_delay
         agents[4] = Agent.addAgent("soma.lua", ENV_WIDTH*0.9, ENV_HEIGHT*0.5)
         T_trigger[4] = absolute_time + 2*neuron_delay
+
+    elseif network=="reservoir" then
+        n_neurons = n_neurons-1
+        for i=1, 2*n_neurons/5 do
+            ag_x, ag_y = circular_layout(i, ENV_WIDTH/3, n_neurons/3, 2*math.pi)
+            inhibit_trigger[i] = 1
+            T_trigger[i] = absolute_time
+        end
+        for i=2*n_neurons/5+1, 3*n_neurons/5 do
+            ag_x, ag_y = circular_layout(i, ENV_WIDTH/4, n_neurons/3, 2*math.pi)
+            inhibit_trigger[i] = 1
+            T_trigger[i] = absolute_time
+        end
+        for i=3*n_neurons/5+1, 4*n_neurons/5 do
+            ag_x, ag_y = circular_layout(i, ENV_WIDTH/6, n_neurons/3, 2*math.pi)
+            inhibit_trigger[i] = 1
+            T_trigger[i] = absolute_time
+        end
+        for i=4*n_neurons/5+1, n_neurons do
+            ag_x, ag_y = circular_layout(i, ENV_WIDTH/9, n_neurons/3, 2*math.pi)
+            inhibit_trigger[i] = 1
+            T_trigger[i] = absolute_time
+        end
+        n_neurons = n_neurons+1
+        agents[n_neurons] = Agent.addAgent("soma.lua", ENV_WIDTH/2,
+                                           ENV_HEIGHT/2)
+        T_trigger[n_neurons] = absolute_time
 
     else
         say("Invalid network: " .. network)
@@ -157,9 +185,9 @@ function linear_layout(index)
     agents[index] = Agent.addAgent("soma.lua", agent_x, agent_y)
 end
 
-function circular_layout(index, radius)
-    max_angle = 3*math.pi / 2
-    angle = (max_angle/n_neurons) * (index-1)
+function circular_layout(index, radius, n, max_angle)
+    max_angle = max_angle or 3*math.pi/2
+    angle = (max_angle/n) * (index-1)
     agent_x = ENV_WIDTH/2 + radius*math.sin(angle)
     agent_y = ENV_HEIGHT/2 + radius*math.cos(angle)
     agents[index] = Agent.addAgent("soma.lua", agent_x, agent_y)
@@ -170,6 +198,7 @@ function circular_layout(index, radius)
         desired_connections[agents[index]] = 0
     end
     final_connections[agents[index]] = 0
+    return agent_x, agent_y
 end
 
 
