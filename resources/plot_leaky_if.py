@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Script for drawing the shape of the Hebbian rule.
+Script for drawing the evolution of a neuron following the Leaky I-F
 """
 # Standard libraries
+import math
 import os
 # Third-party libraries
 import matplotlib.pyplot as plt
@@ -41,24 +42,37 @@ def format_plotting():
     return
 
 
-def main(tau=10):
+def main(u_rest=-70, u_thres=-54, delta_u=15, tau=20):
     """
-    Draw a plot of the EPSC rule (Hebb's rule).
+    Draw the charge-discharge plot of the Leaky I-F model.
     """
-    t = np.arange(-50, 50, 1)
-    # Create the data array. Non linear equation divided in 2 parts,
-    # plus the zero.
-    data1 = -np.exp(-np.abs(t[:50])/tau)
-    data2 = np.exp(-np.abs(t[51:])/tau)
-    data = np.hstack((data1, 0, data2))
+    t = (np.arange(0, 100, .1)).astype(np.float)
+    synapse_data = np.zeros_like(t)
+    synapse_data[100:110] = 1
+    synapse_data[300:310] = 1
+    # Create the data array. Steady-state at u_rest
+    data = (np.ones_like(t) * u_rest).astype(np.float)
+    # Synapse at t=10ms
+    data[100:] = u_rest + delta_u * np.exp(-(t[100:]-t[100])/tau)
+    # Synapse at t=30ms
+    delta_u_300 = delta_u+(data[300]-u_rest)
+    data[300:] = u_rest + delta_u_300 * np.exp(-(t[300:]-t[300])/tau)
+    # Go back to u_rest after spike
+    data[301:] = u_rest
     # Plot data
+    fig, axes = plt.subplots(2, 1)
     format_plotting()
-    plt.plot(t, data)
-    plt.grid()
-    plt.xlabel("Time difference [ms]")
-    plt.ylabel("EPSC amplitude")
+    axes[0].plot(t, data, drawstyle='steps-pre', zorder=2)
+    axes[0].scatter(t[299], -54, marker='x', s=400, c='r', zorder=3)
+    axes[0].axhline(y=u_thres, color='k', zorder=2)
+    axes[0].grid(zorder=1)
+    axes[1].plot(t, synapse_data, color='r', drawstyle='steps-pre')
+    axes[1].grid()
+    plt.xlabel("Time [ms]")
+    axes[0].set_ylabel("Membrane potential (mV)")
+    axes[1].set_ylabel("Synapse input")
     script_path = os.path.dirname(os.path.realpath(__file__))
-    plt.savefig('{}/results/epsc_plot.eps'.format(script_path), bbox_inches='tight')
+    plt.savefig('{}/results/leaky_if.eps'.format(script_path), bbox_inches='tight')
     plt.show()
     return
 

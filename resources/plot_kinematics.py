@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Error estimator top level module
+Script for drawing the evolution of a neuron kinematics
 """
 # Standard libraries
 import os
@@ -40,12 +40,12 @@ def format_plotting():
     return
 
 
-def main(tau=10):
+def main():
     """
     Plot the velocities and accelerations of an agent from a csv file.
     """
     # Import and scale data
-    data = np.genfromtxt("kinematics.csv", delimiter=",", skip_header=1)
+    data = np.genfromtxt("data/kinematics.csv", delimiter=",", skip_header=1)
     data /= 100000
     kernel = np.ones(80)
     filtered_acc_x = signal.convolve(data[:,2], kernel, "same") / kernel.size
@@ -88,9 +88,10 @@ def main(tau=10):
 
     fig.tight_layout()
     script_path = os.path.dirname(os.path.realpath(__file__))
-    plt.savefig('{}/kinematics.eps'.format(script_path),
+    plt.savefig('{}/results/kinematics.eps'.format(script_path),
                 bbox_inches='tight')
     plt.show()
+    return
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Error estimator top level module
+Script for drawing the time plot of a coincidence detector.
 """
 # Standard libraries
 import os
@@ -41,9 +41,9 @@ def format_plotting():
     return
 
 
-def main(tau=10):
+def main():
     """
-    Make a plot of the EPSC rule (Hebb's rule)
+    Make a plot of the signals of a coincidence detector.
     """
     t = np.arange(0, 100, 1)
     # Create the data arrays. 2 inputs and 1 output
@@ -71,9 +71,10 @@ def main(tau=10):
     axes[2].set_ylabel("Output")
     fig.tight_layout()
     script_path = os.path.dirname(os.path.realpath(__file__))
-    plt.savefig('{}/coinc_detector_plot.eps'.format(script_path),
+    plt.savefig('{}/results/coinc_detector_plot.eps'.format(script_path),
                 bbox_inches='tight')
     plt.show()
+    return
 
 
 if __name__ == "__main__":
