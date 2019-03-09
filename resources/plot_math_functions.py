@@ -41,7 +41,7 @@ def format_plotting():
     return
 
 
-def main(tau=10):
+def hebbian_rule(tau=10):
     """
     Draw a plot of the EPSC rule (Hebb's rule).
     """
@@ -63,5 +63,44 @@ def main(tau=10):
     return
 
 
+def sigmoid_function():
+    """
+    Draw the plot of the Sigmoid function.
+    """
+    # Create the data array, using the sigmoid equation
+    u_rest = -70
+    u_thres = -54
+    u = (np.arange(u_rest-10, u_thres+10, .1)).astype(np.float)
+    x_0 = (u_rest+u_thres) / 2
+    k = 5
+    # Narrow the effective area of the Sigmoid function.
+    limit_inf = u_rest
+    limit_sup = u_thres
+    norm_u = (u-limit_inf) / (limit_sup-limit_inf)
+    norm_x0 = (x_0-limit_inf) / (limit_sup-limit_inf)
+    data = 1 / (1+np.exp(-k*(norm_u-norm_x0)))
+    # Plot data
+    format_plotting()
+    plt.plot(u, data)
+    plt.axvline(x=-70, color='r', linestyle="--")
+    plt.axvline(x=-54, color='r', linestyle="--")
+    plt.grid()
+    plt.xlabel("U(t) [mV]")
+    plt.ylabel("S(x)")
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    plt.savefig('{}/results/sigmoid_plot.eps'.format(script_path), bbox_inches='tight')
+    plt.show()
+    return
+
+
+def main(f="hebbian"):
+    if f=="hebbian":
+        hebbian_rule()
+    elif f=="sigmoid":
+        sigmoid_function()
+    return
+
+
 if __name__ == "__main__":
-    main()
+    function = "sigmoid"
+    main(function)
