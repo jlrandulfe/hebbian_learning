@@ -39,6 +39,9 @@ trigger_time = 0
 neuron_delay = 20 * 1e-3   -- [s]
 intensity = 1
 connected_somas = {}
+-- Stochastic spiking parameters
+sigmoid_k = 14.5479
+sigmoid_x0 = 0.5
 -- Leaky model parameters
 C = 0.5             -- [nF]
 R = 40              -- [MOhms]
@@ -51,7 +54,9 @@ delta_U = 15        -- [mV]
 movement = 1
 poisson_noise = Stat.randomInteger(0, 0)
 process_noise = 0
-trigger = false
+trigger = 0
+
+time_diff = 0
 
 function initializeAgent()
 
@@ -70,30 +75,36 @@ function takeStep()
 
     absolute_time = absolute_time + STEP_RESOLUTION    -- [s]
 
-    if trigger and absolute_time>trigger_time then
-        trigger = false
+    if trigger==0 then
+        -- Normalize the membrane potential for determining the triggering
+        U_norm = (U_current-U_rest) / (U_threshold-U_rest)
+        -- Use sigmoid function for determining the spiking probability
+        trigger_prob = 1 / (1+math.exp(-sigmoid_k*(U_norm-sigmoid_x0)))
+        trigger = Stat.bernouilliInt(trigger_prob)
+        if trigger==1 then
+            U_current = U_rest
+            trigger_time = absolute_time + neuron_delay
+        end
+    end
+
+    if trigger==1 and absolute_time>trigger_time then
+        trigger = 0
         Event.emit{speed=0, description="excited_neuron", targetGroup=ID}
         Event.emit{speed=0, description="electric_pulse", table={intensity}}
     end
 
-    if U_current>U_threshold and not trigger then
-        U_current = U_rest
-        trigger = true
-        trigger_time = absolute_time + neuron_delay
-    end
-
-    if U_current > U_rest*0.9 then
+    if U_current > U_rest*0.99 then
         time_diff = absolute_time - synapse_time
         U_current = U_rest + delta_U*math.exp(-time_diff/tau)
     else
         U_current = U_rest
     end
 
-    -- if (absolute_time > synapse_time+process_noise) and synapse then
-    --     Event.emit{speed=0, description="excited_neuron", targetGroup=ID}
-    --     Event.emit{speed=0, description="electric_pulse", table={intensity}}
-    --     synapse = false
-    -- end
+    if (absolute_time > synapse_time+process_noise) and synapse then
+        Event.emit{speed=0, description="excited_neuron", targetGroup=ID}
+        Event.emit{speed=0, description="electric_pulse", table={intensity}}
+        synapse = false
+    end
 
     if init then
         new_agent = Agent.addAgent("growth_cone.lua", PositionX, PositionY)
@@ -107,7 +118,7 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
 
     if eventDescription=="synapse" then
         -- Ignore synapses when the neuron triggering is being processed
-        if not trigger then
+        if trigger==0 then
             synapse_time = absolute_time
             process_noise = Stat.poissonFloat(poisson_noise) * 1e-3
             if sourceID==1 then

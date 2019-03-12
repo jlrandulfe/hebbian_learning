@@ -70,9 +70,9 @@ def sigmoid_function():
     # Create the data array, using the sigmoid equation
     u_rest = -70
     u_thres = -54
-    u = (np.arange(u_rest-10, u_thres+10, .1)).astype(np.float)
+    u = (np.arange(u_rest-1, u_thres+1, .1)).astype(np.float)
     x_0 = (u_rest+u_thres) / 2
-    k = 5
+    k = 14.5479
     # Narrow the effective area of the Sigmoid function.
     limit_inf = u_rest
     limit_sup = u_thres
