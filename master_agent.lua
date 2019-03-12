@@ -26,9 +26,9 @@ Stat = require "ranalib_statistic"
 Event = require "ranalib_event"
 
 -- Network parameters
--- Possible networks: "delay_detector", "coincidence_detector",
+-- Possible networks: "neuron_pair, ""delay_detector", "coincidence_detector",
 -- "leaky_propagation", "reservoir"
-network = "reservoir"
+network = "coincidence_detector"
 agents = {}
 -- For reservoir, choose a value that allows to get n_neurons=5*N+1
 n_neurons = 26
@@ -53,15 +53,30 @@ function initializeAgent()
     PositionX = -1
     PositionY = -1
 
-    if network=="coincidence_detector" then
+
+    if network=="neuron_pair" then
+        n_neurons = 2
+        agents[1] = Agent.addAgent("soma.lua", ENV_WIDTH*0.6, ENV_HEIGHT*0.4)
+        T_trigger[1] = absolute_time
+        inhibit_trigger[1] = 1
+        final_connections[agents[1]] = {}
+        agents[2] = Agent.addAgent("soma.lua", ENV_WIDTH*0.4, ENV_HEIGHT*0.6)
+        T_trigger[2] = absolute_time
+        inhibit_trigger[2] = 1
+        final_connections[agents[2]] = {}
+
+    elseif network=="coincidence_detector" then
         n_neurons = 3
         -- Create a 3 neurons layout, and get their IDs in a list
         agents[1] = Agent.addAgent("soma.lua", ENV_WIDTH*0.6, ENV_HEIGHT*0.4)
         T_trigger[1] = absolute_time
-        agents[2] = Agent.addAgent("soma.lua", ENV_WIDTH*0.4, ENV_HEIGHT*0.6)
+        final_connections[agents[1]] = {}
+        agents[2] = Agent.addAgent("soma.lua", ENV_WIDTH*0.55, ENV_HEIGHT*0.6)
         T_trigger[2] = absolute_time
+        final_connections[agents[2]] = {}
         agents[3] = Agent.addAgent("soma.lua", ENV_WIDTH*0.8, ENV_HEIGHT*0.5)
         T_trigger[3] = absolute_time + neuron_delay
+        final_connections[agents[3]] = {}
 
     elseif network=="delay_detector" then
         -- Create N neurons, and get their IDs in a list
@@ -77,39 +92,55 @@ function initializeAgent()
         -- Create a 4 neurons layout, and get their IDs in a list
         agents[1] = Agent.addAgent("soma.lua", ENV_WIDTH*0.6, ENV_HEIGHT*0.4)
         T_trigger[1] = absolute_time
+        final_connections[agents[1]] = {}
         agents[2] = Agent.addAgent("soma.lua", ENV_WIDTH*0.55, ENV_HEIGHT*0.6)
         T_trigger[2] = absolute_time
+        final_connections[agents[2]] = {}
         agents[3] = Agent.addAgent("soma.lua", ENV_WIDTH*0.7, ENV_HEIGHT*0.5)
         T_trigger[3] = absolute_time + neuron_delay
+        final_connections[agents[3]] = {}
         agents[4] = Agent.addAgent("soma.lua", ENV_WIDTH*0.9, ENV_HEIGHT*0.5)
         T_trigger[4] = absolute_time + 2*neuron_delay
+        final_connections[agents[4]] = {}
 
     elseif network=="reservoir" then
         n_neurons = n_neurons-1
-        for i=1, 2*n_neurons/5 do
-            ag_x, ag_y = circular_layout(i, ENV_WIDTH/3, n_neurons/3, 2*math.pi)
+        max_x = 0
+        -- Neurons arranged in 4 concentric circles with different radii
+        for i=1, n_neurons do
+            if i>0 and i<=2*n_neurons/5 then
+                r = ENV_WIDTH/3
+            elseif i>2*n_neurons/5 and i<=3*n_neurons/5 then
+                r = ENV_WIDTH/4
+            elseif i>3*n_neurons/5 and i<=4*n_neurons/5 then
+                r = ENV_WIDTH/6
+            else
+                r = ENV_WIDTH/9
+            end
+            -- Check which is the rightmost neuron, as it will be the
+            -- reservoir output.
+            ag_x, ag_y = circular_layout(i, r, n_neurons/3, 2*math.pi)
+            if ag_x > max_x then
+                max_x = ag_x
+                output_agent = i
+            end
             inhibit_trigger[i] = 1
             T_trigger[i] = absolute_time
         end
-        for i=2*n_neurons/5+1, 3*n_neurons/5 do
-            ag_x, ag_y = circular_layout(i, ENV_WIDTH/4, n_neurons/3, 2*math.pi)
-            inhibit_trigger[i] = 1
-            T_trigger[i] = absolute_time
-        end
-        for i=3*n_neurons/5+1, 4*n_neurons/5 do
-            ag_x, ag_y = circular_layout(i, ENV_WIDTH/6, n_neurons/3, 2*math.pi)
-            inhibit_trigger[i] = 1
-            T_trigger[i] = absolute_time
-        end
-        for i=4*n_neurons/5+1, n_neurons do
-            ag_x, ag_y = circular_layout(i, ENV_WIDTH/9, n_neurons/3, 2*math.pi)
-            inhibit_trigger[i] = 1
-            T_trigger[i] = absolute_time
-        end
+        -- Last neuron at the centre of the network
         n_neurons = n_neurons+1
         agents[n_neurons] = Agent.addAgent("soma.lua", ENV_WIDTH/2,
                                            ENV_HEIGHT/2)
+        inhibit_trigger[n_neurons] = 1
         T_trigger[n_neurons] = absolute_time
+        -- Set 2 neurons as inputs
+        inhibit_trigger[7] = -1
+        T_trigger[7] = absolute_time
+        inhibit_trigger[9] = -1
+        T_trigger[9] = absolute_time
+        -- Revert trigger parameters of output neuron
+        inhibit_trigger[output_agent] = -1
+        T_trigger[output_agent] = absolute_time + neuron_delay
 
     else
         say("Invalid network: " .. network)
@@ -160,7 +191,8 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
     if eventDescription == "cone_connected" then
         dest_id = eventTable[1]
         parent_id = eventTable[2]
-        final_connections[parent_id] = dest_id
+        say(parent_id .." connected to " .. dest_id)
+        table.insert(final_connections[parent_id], dest_id)
         -- Check connection of intermediate neuron for Leaky network
         if network=="leaky_propagation" and  parent_id==4 then
             if dest_id==2 then
@@ -191,20 +223,21 @@ function circular_layout(index, radius, n, max_angle)
     agent_x = ENV_WIDTH/2 + radius*math.sin(angle)
     agent_y = ENV_HEIGHT/2 + radius*math.cos(angle)
     agents[index] = Agent.addAgent("soma.lua", agent_x, agent_y)
+    final_connections[agents[index]] = {}
     -- Tables with the goal and current neuron connections
     if index>1 then
         desired_connections[agents[index]] = agents[index-1]
     else
         desired_connections[agents[index]] = 0
     end
-    final_connections[agents[index]] = 0
     return agent_x, agent_y
 end
 
 
 function cleanUp()
+
     -- Get the success rate and save it to file
-    file = io.open(script_path().."/log/connections.csv", "w")
+    file = io.open(script_path().."/log/success.csv", "w")
     file:write("Origin soma;Destination soma;Success\n")
     final_success = 0
     for index, value in pairs(desired_connections) do
@@ -222,6 +255,22 @@ function cleanUp()
         success_rate = -1
     end
     file:write(";Suc. rate;"..success_rate.."\n")
+    file:close()
+
+    -- Get the neurons connections and save it to file
+    file = io.open(script_path().."/log/connections.csv", "w")
+    file:write("Origin soma;Destination somas\n")
+    for index, destinations in pairs(final_connections) do
+        file:write(index)
+        for dest_index, value in pairs(destinations) do
+            if dest_index==1 then
+                file:write(";" .. value)
+            else
+                file:write("," .. value)
+            end
+        end
+        file:write("\n")
+    end
     file:close()
 
     -- Write kinematics data to csv file

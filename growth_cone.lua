@@ -70,8 +70,6 @@ received_pulse_time = 0
 
 function initializeAgent()
     Agent.changeColor{g=255}
-    -- Initialize the soma at the middle of the map
-    -- say("Growth cone Agent#: " .. ID .. " has been initialized")
 
 	Speed = 100
 	GridMove = true
