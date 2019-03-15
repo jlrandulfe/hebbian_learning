@@ -27,8 +27,8 @@ Event = require "ranalib_event"
 
 -- Network parameters
 -- Possible networks: "neuron_pair, ""delay_detector", "coincidence_detector",
--- "leaky_propagation", "reservoir"
-network = "coincidence_detector"
+-- "leaky_propagation", "reservoir", "extended_coincidence_detector"
+network = "extended_coincidence_detector"
 agents = {}
 -- For reservoir, choose a value that allows to get n_neurons=5*N+1
 n_neurons = 26
@@ -141,6 +141,22 @@ function initializeAgent()
         -- Revert trigger parameters of output neuron
         inhibit_trigger[output_agent] = -1
         T_trigger[output_agent] = absolute_time + neuron_delay
+
+    elseif network=="extended_coincidence_detector" then
+        n_neurons = 4
+        -- Create a 3 neurons layout, and get their IDs in a list
+        agents[1] = Agent.addAgent("soma.lua", ENV_WIDTH*0.45, ENV_HEIGHT*0.4)
+        T_trigger[1] = absolute_time + neuron_delay
+        final_connections[agents[1]] = {}
+        agents[2] = Agent.addAgent("soma.lua", ENV_WIDTH*0.4, ENV_HEIGHT*0.6)
+        T_trigger[2] = absolute_time
+        final_connections[agents[2]] = {}
+        agents[3] = Agent.addAgent("soma.lua", ENV_WIDTH*0.5, ENV_HEIGHT*0.55)
+        T_trigger[3] = absolute_time + neuron_delay
+        final_connections[agents[3]] = {}
+        agents[4] = Agent.addAgent("soma.lua", ENV_WIDTH*0.6, ENV_HEIGHT*0.5)
+        T_trigger[4] = absolute_time + 2*neuron_delay
+        final_connections[agents[4]] = {}
 
     else
         say("Invalid network: " .. network)
