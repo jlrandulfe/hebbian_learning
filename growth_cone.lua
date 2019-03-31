@@ -34,7 +34,7 @@ reg_rate = 100
 record_kinematics = false
 
 -- Environment properties
-env_noise_var = 0.5
+env_noise_var = 1
 drag_coef = 0.8
 
 -- Agent properties
@@ -94,7 +94,7 @@ function takeStep()
         create_spine_agent()
 
         -- Set the growth cone velocity based on the electric pulse sources
-        if connected then
+        if connected or parent_id==2 or parent_id==3 then
             vx = 0
             vy = 0
             ax = 0

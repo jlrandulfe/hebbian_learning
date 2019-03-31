@@ -34,6 +34,7 @@ init = true
 absolute_time = 0
 synapse_time = 0
 trigger_time = 0
+prev_trigger_time = 0
 
 -- Neuron parameters
 neuron_delay = 20 * 1e-3   -- [s]
@@ -58,6 +59,9 @@ trigger = 0
 
 time_diff = 0
 
+-- Data collection variables
+firing_times = {}
+
 function initializeAgent()
 
     Agent.changeColor{r=255}
@@ -80,6 +84,7 @@ function takeStep()
         U_norm = (U_current-U_rest) / (U_threshold-U_rest)
         -- Use sigmoid function for determining the spiking probability
         trigger_prob = 1 / (1+math.exp(-sigmoid_k*(U_norm-sigmoid_x0)))
+        -- Create a trigger based on a Bernouilli distribution
         trigger = Stat.bernouilliInt(trigger_prob)
         if trigger==1 then
             U_current = U_rest
@@ -87,12 +92,23 @@ function takeStep()
         end
     end
 
+    -- Emit events when trigger event is assessed
     if trigger==1 and absolute_time>trigger_time then
         trigger = 0
         Event.emit{speed=0, description="excited_neuron", targetGroup=ID}
         Event.emit{speed=0, description="electric_pulse", table={intensity}}
+        if ID==2 then
+            diff = absolute_time-(prev_trigger_time+neuron_delay)
+            table.insert(firing_times, math.floor(diff*1000))
+            prev_trigger_time = absolute_time
+            if #firing_times==5000 then
+                say("Fired 10000 times. Sending timing to master")
+                Event.emit{speed=0,  description="firing_time", table=firing_times}
+            end
+        end
     end
 
+    -- Ignore voltage potentials closer than 0.01% of U_rest
     if U_current > U_rest*0.99 then
         time_diff = absolute_time - synapse_time
         U_current = U_rest + delta_U*math.exp(-time_diff/tau)
@@ -100,12 +116,8 @@ function takeStep()
         U_current = U_rest
     end
 
-    if (absolute_time > synapse_time+process_noise) and synapse then
-        Event.emit{speed=0, description="excited_neuron", targetGroup=ID}
-        Event.emit{speed=0, description="electric_pulse", table={intensity}}
-        synapse = false
-    end
-
+    -- Create new growth cone on initialization or after current cone is
+    -- connected
     if init then
         new_agent = Agent.addAgent("growth_cone.lua", PositionX, PositionY)
         init = false

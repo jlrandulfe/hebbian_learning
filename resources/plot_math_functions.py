@@ -3,6 +3,7 @@
 Script for drawing the shape of the Hebbian rule.
 """
 # Standard libraries
+import math
 import os
 # Third-party libraries
 import matplotlib.pyplot as plt
@@ -63,21 +64,27 @@ def hebbian_rule(tau=10):
     return
 
 
-def sigmoid_function():
+def sigmoid_function(natural_period=100, time_step=1):
     """
     Draw the plot of the Sigmoid function.
     """
+    # Get the probability of 50 percent of spiking before the natural period
+    trials = natural_period / time_step
+    p = 1 - (1-0.5)**(1/trials)
+    print("Probability of spiking at U_rest = {}".format(p))
     # Create the data array, using the sigmoid equation
     u_rest = -70
     u_thres = -54
-    u = (np.arange(u_rest-1, u_thres+1, .1)).astype(np.float)
-    x_0 = (u_rest+u_thres) / 2
-    k = 14.5479
+    u = (np.arange(u_rest-1, u_thres+10, .1)).astype(np.float)
+    x_0 = u_thres
     # Narrow the effective area of the Sigmoid function.
     limit_inf = u_rest
     limit_sup = u_thres
     norm_u = (u-limit_inf) / (limit_sup-limit_inf)
     norm_x0 = (x_0-limit_inf) / (limit_sup-limit_inf)
+    k = (math.log(p) - math.log(1-p)) / (-norm_x0)
+    print("Normalized x_0 = {}".format(norm_x0))
+    print("Sigmoid k = {}".format(k))
     data = 1 / (1+np.exp(-k*(norm_u-norm_x0)))
     # Plot data
     format_plotting()

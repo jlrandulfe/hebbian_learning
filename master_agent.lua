@@ -34,6 +34,7 @@ agents = {}
 n_neurons = 26
 connections_table = {}
 kinematics_table = {["vx"]={}, ["vy"]={}, ["ax"]={}, ["ay"]={}}
+firing_times = {}
 final_connections = {}
 desired_connections = {}
 leaky_connections = {false, false}
@@ -204,6 +205,10 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         kinematics_table = eventTable
     end
 
+    if eventDescription == "firing_time" then
+        firing_times = eventTable
+    end
+
     if eventDescription == "cone_connected" then
         dest_id = eventTable[1]
         parent_id = eventTable[2]
@@ -299,6 +304,14 @@ function cleanUp()
     for index=1,#v_x do
         file:write(v_x[index] .. "," .. v_y[index] .. "," .. a_x[index]
                    .. "," .. a_y[index] .. "\n")
+    end
+    file:close()
+
+    -- Write firing times data to csv file
+    file = io.open(script_path().."/log/firing_times.csv", "w")
+    file:write("t_diff\n")
+    for index=1,#firing_times do
+        file:write(firing_times[index] .. "\n")
     end
     file:close()
 end
