@@ -53,6 +53,7 @@ U_threshold = -54   -- [mV]
 delta_U = 15        -- [mV]
 -- Set movement to 0 for a static growth cone
 movement = 1
+growth = true
 poisson_noise = Stat.randomInteger(0, 0)
 process_noise = 0
 trigger = 0
@@ -78,6 +79,13 @@ end
 function takeStep()
 
     absolute_time = absolute_time + STEP_RESOLUTION    -- [s]
+
+    -- Stop growth after a specific time
+    if growth and absolute_time>460 then
+        growth = false
+        Event.emit{speed=0, description="stop_growth", targetGroup=ID}
+        say("Neuron " .. ID .. " stopped growing: Timeout")
+    end
 
     if trigger==0 then
         -- Normalize the membrane potential for determining the triggering

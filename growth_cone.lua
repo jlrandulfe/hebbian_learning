@@ -51,6 +51,7 @@ conv_factor = 100000
 spine_link_length = 2
 connected = false
 excited = false
+growth = true
 excitation_level = 0
 vx = 0
 vy = 0
@@ -64,6 +65,7 @@ min_time_diff = 0.01
 max_time_diff = 0.12
 tau = 0.02
 
+-- Timers
 absolute_time = 0
 excited_neuron_time = 0
 received_pulse_time = 0
@@ -94,7 +96,7 @@ function takeStep()
         create_spine_agent()
 
         -- Set the growth cone velocity based on the electric pulse sources
-        if connected or parent_id==2 or parent_id==3 then
+        if connected or not growth then
             vx = 0
             vy = 0
             ax = 0
@@ -166,6 +168,12 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         nonvalid_somas = eventTable[2]
         Event.emit{speed=0,description="cone_parent",
                    table={["cone_id"]=ID, ["parent_id"]=sourceID}}
+        -- Auxiliary patch for avoiding undesired growth in the extended
+        -- coincidence detector
+        if parent_id==2 or parent_id==3 then
+            growth = false
+            say("Neuron " .. parent_id .. " prevented from growing")
+        end
     end
 
     if eventDescription == "excited_neuron" then
@@ -186,6 +194,10 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
                 pulses_table[key] = {values[1], values[2], intensity, values[4]}
             end
         end
+    end
+
+    if eventDescription == "stop_growth" then
+        growth = false
     end
 end
 
