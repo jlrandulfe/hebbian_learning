@@ -103,8 +103,9 @@ function takeStep()
     -- Emit events when trigger event is assessed
     if trigger==1 and absolute_time>trigger_time then
         trigger = 0
-        Event.emit{speed=0, description="excited_neuron", targetGroup=ID}
+        Event.emit{speed=0, description="excited_neuron"}
         Event.emit{speed=0, description="electric_pulse", table={intensity}}
+        -- Send firing times data to master agent
         if ID==2 then
             diff = absolute_time-(prev_trigger_time+neuron_delay)
             table.insert(firing_times, math.floor(diff*1000))
@@ -148,10 +149,12 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
             end
         end
     end
+
     if eventDescription=="cone_init" and sourceID==new_agent then
         Event.emit{speed=0, description="assign_group", targetID=new_agent,
                    table={movement, connected_somas}}
     end
+
     if eventDescription=="cone_connected" and sourceID==new_agent then
         dest_id = eventTable[1]
         connected_somas[dest_id] = 1

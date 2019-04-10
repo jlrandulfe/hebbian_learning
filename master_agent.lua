@@ -28,13 +28,16 @@ Event = require "ranalib_event"
 -- Network parameters
 -- Possible networks: "neuron_pair, ""delay_detector", "coincidence_detector",
 -- "leaky_propagation", "reservoir", "extended_coincidence_detector"
-network = "extended_coincidence_detector"
+network = "neuron_pair"
 agents = {}
 -- For reservoir, choose a value that allows to get n_neurons=5*N+1
 n_neurons = 26
 connections_table = {}
+-- Logged data
 kinematics_table = {["vx"]={}, ["vy"]={}, ["ax"]={}, ["ay"]={}}
+correlations_table = {["delta_14"]={}, ["delta_24"]={}}
 firing_times = {}
+current_firing_times ={}
 final_connections = {}
 desired_connections = {}
 leaky_connections = {false, false}
@@ -47,6 +50,7 @@ T_trigger = {}
 absolute_time = 0
 neuron_delay = 20 * 1e-3   -- [s]
 period = 1000 * 1e-3       -- [s]
+stop_learning_time = 500   -- [s]
 
 
 function initializeAgent()
@@ -229,6 +233,16 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         end
     end
 
+    if eventDescription == "excited_neuron" then
+        current_firing_times[sourceID] = absolute_time
+        if absolute_time>stop_learning_time and sourceID==5 then
+            diff_14 = math.floor((absolute_time-current_firing_times[2]) * 1000)
+            diff_24 = math.floor((absolute_time-current_firing_times[3]) * 1000)
+            table.insert(correlations_table["delta_14"], diff_14)
+            table.insert(correlations_table["delta_24"], diff_24)
+        end
+    end
+
 end
 
 
@@ -314,4 +328,17 @@ function cleanUp()
         file:write(firing_times[index] .. "\n")
     end
     file:close()
+
+    -- Write time correlations matrix between neurons 1-4 and 2-4
+    file = io.open(script_path().."/log/firing_correlations.csv", "w")
+    file:write("t_14, t_24\n")
+    t_14 = correlations_table["delta_14"]
+    t_24 = correlations_table["delta_24"]
+    for index=1,#t_14 do
+        file:write(t_14[index] .. "," .. t_24[index] .. "\n")
+    end
+    file:close()
+
+    say("Matrix 1-4: " .. #correlations_table["delta_14"])
+    say("Matrix 2-4: " .. #correlations_table["delta_24"])
 end

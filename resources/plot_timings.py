@@ -40,17 +40,18 @@ def format_plotting():
     return
 
 
-def main():
+def plot_1D_histogram(datafile="data/firing_times_u_rest.csv"):
     """
     Plot the histogram of the firing times of an agent
     """
-    # Import and scale data
-    data = np.genfromtxt("data/firing_times_u_rest.csv", delimiter=",", skip_header=1)
+    # Import data and prepare plot
+    data = np.genfromtxt(datafile, delimiter=",", skip_header=1)
     n, bins, patches = plt.hist(data, bins=100, range=(0, 2000), edgecolor="k")
 
-    # Set plots layout
+    # Set plots format
     format_plotting()
 
+    # Save and show results
     script_path = os.path.dirname(os.path.realpath(__file__))
     plt.savefig('{}/results/firing_times.eps'.format(script_path),
                 bbox_inches='tight')
@@ -60,6 +61,28 @@ def main():
     print("Data median: {}".format(np.median(data)))
     plt.show()
     return
+
+
+def plot_2D_scatterplot(datafile="data/firing_correlations.csv"):
+    """
+    Plot the 2-D scatter plot of 3 neurons timing differences
+    """
+    # Import data and prepare plot
+    data = np.genfromtxt(datafile, delimiter=",", skip_header=1)
+    plt.scatter(data[:,0], data[:,1])
+
+    # Set plots format
+    format_plotting()
+
+    # Save and show results
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    plt.savefig('{}/results/firing_correlations.eps'.format(script_path),
+            bbox_inches='tight')
+    plt.show()
+
+
+def main():
+    plot_2D_scatterplot()
 
 
 if __name__ == "__main__":
