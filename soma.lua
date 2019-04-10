@@ -46,16 +46,21 @@ sigmoid_x0 = 0.5
 -- Leaky model parameters
 C = 0.5             -- [nF]
 R = 40              -- [MOhms]
-tau = C*R * 1e-3    -- [s]
+tau = C*R * 10e-3    -- [s]
 U_rest = -70        -- [mV]
 U_current = -70     -- [mV]
 U_threshold = -54   -- [mV]
-delta_U = 15        -- [mV]
+U_pulse = 15        -- [mV]
 -- Set movement to 0 for a static growth cone
 movement = 1
 growth = true
+
+-- Noise parameters
 poisson_noise = Stat.randomInteger(0, 0)
 process_noise = 0
+noise_mean = 0.07
+noise_var = 0.01
+
 trigger = 0
 
 time_diff = 0
@@ -110,20 +115,27 @@ function takeStep()
             diff = absolute_time-(prev_trigger_time+neuron_delay)
             table.insert(firing_times, math.floor(diff*1000))
             prev_trigger_time = absolute_time
-            if #firing_times==5000 then
-                say("Fired 10000 times. Sending timing to master")
+            if #firing_times==1000 then
+                say("Fired 1000 times. Sending timing to master")
                 Event.emit{speed=0,  description="firing_time", table=firing_times}
             end
         end
+        U_current = U_rest
     end
 
-    -- Ignore voltage potentials closer than 0.01% of U_rest
-    if U_current > U_rest*0.99 then
+    -- Use capacitor equation for calculating the decay of the voltage.
+    -- Ignore voltage potentials closer than 0.1 mV from U_rest
+    if U_current > U_rest+0.1 then
         time_diff = absolute_time - synapse_time
+        delta_U = U_current - U_rest
         U_current = U_rest + delta_U*math.exp(-time_diff/tau)
     else
         U_current = U_rest
     end
+    -- Increase the voltage of the neuron based on the Gaussian distribution
+    U_noise = Stat.gaussianFloat(noise_mean, noise_var)
+    U_current = U_current + U_noise
+    synapse_time = absolute_time
 
     -- Create new growth cone on initialization or after current cone is
     -- connected
@@ -143,9 +155,9 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
             synapse_time = absolute_time
             process_noise = Stat.poissonFloat(poisson_noise) * 1e-3
             if sourceID==1 then
-                U_current = U_current + 2*delta_U
+                U_current = U_current + 2*U_pulse
             else
-                U_current = U_current + delta_U
+                U_current = U_current + U_pulse
             end
         end
     end

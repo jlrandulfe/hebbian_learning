@@ -40,7 +40,7 @@ def format_plotting():
     return
 
 
-def plot_1D_histogram(datafile="data/firing_times_u_rest.csv"):
+def plot_1D_histogram(datafile="data/firing_times.csv"):
     """
     Plot the histogram of the firing times of an agent
     """
@@ -82,7 +82,7 @@ def plot_2D_scatterplot(datafile="data/firing_correlations.csv"):
 
 
 def main():
-    plot_2D_scatterplot()
+    plot_1D_histogram()
 
 
 if __name__ == "__main__":
