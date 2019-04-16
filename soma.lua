@@ -41,12 +41,12 @@ neuron_delay = 20 * 1e-3   -- [s]
 intensity = 1
 connected_somas = {}
 -- Stochastic spiking parameters
-sigmoid_k = 14.5479
-sigmoid_x0 = 0.5
+sigmoid_k =  13.692087
+sigmoid_x0 = 1
 -- Leaky model parameters
-C = 0.5             -- [nF]
-R = 40              -- [MOhms]
-tau = C*R * 10e-3    -- [s]
+C = 8               -- [nF]
+R = 65              -- [MOhms]
+tau = C*R * 1e-3    -- [s]
 U_rest = -70        -- [mV]
 U_current = -70     -- [mV]
 U_threshold = -54   -- [mV]
@@ -58,7 +58,7 @@ growth = true
 -- Noise parameters
 poisson_noise = Stat.randomInteger(0, 0)
 process_noise = 0
-noise_mean = 0.07
+noise_mean = 0.02
 noise_var = 0.01
 
 trigger = 0
@@ -66,7 +66,9 @@ trigger = 0
 time_diff = 0
 
 -- Data collection variables
+samples = 5000
 firing_times = {}
+voltages = {}
 
 function initializeAgent()
 
@@ -115,8 +117,8 @@ function takeStep()
             diff = absolute_time-(prev_trigger_time+neuron_delay)
             table.insert(firing_times, math.floor(diff*1000))
             prev_trigger_time = absolute_time
-            if #firing_times==1000 then
-                say("Fired 1000 times. Sending timing to master")
+            if #firing_times==samples then
+                say("Fired " .. samples .. " times. Sending timing to master")
                 Event.emit{speed=0,  description="firing_time", table=firing_times}
             end
         end
@@ -125,7 +127,7 @@ function takeStep()
 
     -- Use capacitor equation for calculating the decay of the voltage.
     -- Ignore voltage potentials closer than 0.1 mV from U_rest
-    if U_current > U_rest+0.1 then
+    if U_current > U_rest then
         time_diff = absolute_time - synapse_time
         delta_U = U_current - U_rest
         U_current = U_rest + delta_U*math.exp(-time_diff/tau)
@@ -133,9 +135,26 @@ function takeStep()
         U_current = U_rest
     end
     -- Increase the voltage of the neuron based on the Gaussian distribution
-    U_noise = Stat.gaussianFloat(noise_mean, noise_var)
-    U_current = U_current + U_noise
-    synapse_time = absolute_time
+    if trigger==0 then
+        U_noise = Stat.gaussianFloat(noise_mean, noise_var)
+        U_current = U_current + U_noise
+        synapse_time = absolute_time
+    end
+
+    -- Record the neuron voltages to csv file
+    if ID==2 then
+        table.insert(voltages, U_current)
+        if #voltages==samples then
+            -- Write firing times data to csv file
+            file = io.open(script_path().."/log/voltage.csv", "w")
+            file:write("U(t)\n")
+            for index=1,samples do
+                file:write(math.floor(voltages[index]*1000) .. "\n")
+            end
+            file:close()
+            say("Voltages saved to .csv file")
+        end
+    end
 
     -- Create new growth cone on initialization or after current cone is
     -- connected
@@ -173,6 +192,13 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         init = true
     end
 end
+
+
+function script_path()
+    local str = debug.getinfo(2, "S").source:sub(2)
+    return str:match("(.*/)")
+end
+
 
 function cleanUp()
 end
