@@ -50,7 +50,7 @@ def leaky_only_noise(u_rest=-70, u_thres=-54, noise=0.02, R=65, C=8):
     data /= 1000.0
     # Simulate neuron voltage
     leaky_k = math.exp(-1/(R*C))
-    iterations = 10000
+    iterations = 2000
     voltages = np.zeros(iterations)
     voltages[0] = u_rest
     for i in range(iterations-1): 
@@ -58,7 +58,7 @@ def leaky_only_noise(u_rest=-70, u_thres=-54, noise=0.02, R=65, C=8):
 
     # Plot real and simulated data
     plt.plot(voltages, "b")
-    plt.plot(data, "g")
+    plt.plot(data[:iterations], "g")
     plt.title("R={} MOhms, C={} nF, Noise={}".format(R, C, noise))
     plt.axhline(y=-70, color='r', linestyle="--")
     plt.axhline(y=-54, color='r', linestyle="--")

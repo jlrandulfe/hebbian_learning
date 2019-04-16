@@ -50,7 +50,7 @@ tau = C*R * 1e-3    -- [s]
 U_rest = -70        -- [mV]
 U_current = -70     -- [mV]
 U_threshold = -54   -- [mV]
-U_pulse = 15        -- [mV]
+U_pulse = 6         -- [mV]
 -- Set movement to 0 for a static growth cone
 movement = 1
 growth = true

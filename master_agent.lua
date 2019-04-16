@@ -28,7 +28,7 @@ Event = require "ranalib_event"
 -- Network parameters
 -- Possible networks: "neuron_pair, ""delay_detector", "coincidence_detector",
 -- "leaky_propagation", "reservoir", "extended_coincidence_detector"
-network = "neuron_pair"
+network = "extended_coincidence_detector"
 agents = {}
 -- For reservoir, choose a value that allows to get n_neurons=5*N+1
 n_neurons = 26
@@ -49,7 +49,7 @@ inhibit_trigger = {}
 T_trigger = {}
 absolute_time = 0
 neuron_delay = 20 * 1e-3   -- [s]
-period = 1000 * 1e-3       -- [s]
+period = 200 * 1e-3       -- [s]
 stop_learning_time = 500   -- [s]
 
 
@@ -341,4 +341,6 @@ function cleanUp()
 
     say("Matrix 1-4: " .. #correlations_table["delta_14"])
     say("Matrix 2-4: " .. #correlations_table["delta_24"])
+
+    say("Data saved to log")
 end

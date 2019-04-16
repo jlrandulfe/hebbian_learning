@@ -72,6 +72,13 @@ def plot_2D_scatterplot(datafile="data/firing_correlations.csv"):
     data = np.genfromtxt(datafile, delimiter=",", skip_header=1)
     plt.scatter(data[:,0], data[:,1])
 
+    # Get covariance
+    cov_matrix = np.cov(data, rowvar=False)
+    mean = data.mean(axis=0)
+    print("mean vector mu_hat=[{}, {}]".format(mean[0], mean[1]))
+    print("Covariance matrix: ")
+    print(cov_matrix)
+
     # Set plots format
     format_plotting()
 
@@ -83,7 +90,7 @@ def plot_2D_scatterplot(datafile="data/firing_correlations.csv"):
 
 
 def main():
-    plot_1D_histogram()
+    plot_2D_scatterplot()
 
 
 if __name__ == "__main__":
