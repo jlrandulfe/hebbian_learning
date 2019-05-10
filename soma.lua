@@ -66,7 +66,7 @@ trigger = 0
 time_diff = 0
 
 -- Data collection variables
-samples = 5000
+samples = 10000
 firing_times = {}
 voltages = {}
 

@@ -5,6 +5,7 @@ Script for drawing the evolution of a neuron kinematics
 # Standard libraries
 import os
 # Third-party libraries
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import signal
@@ -12,7 +13,7 @@ from scipy import signal
 
 def format_plotting():
     plt.rcParams['figure.figsize'] = (10, 8)
-    plt.rcParams['font.size'] = 22
+    plt.rcParams['font.size'] = 25
     #    plt.rcParams['font.family'] = 'Times New Roman'
     plt.rcParams['axes.labelsize'] = plt.rcParams['font.size']
     plt.rcParams['axes.titlesize'] = 1.2 * plt.rcParams['font.size']
@@ -46,11 +47,13 @@ def plot_1D_histogram(datafile="data/firing_times.csv"):
     """
     # Import data and prepare plot
     data = np.genfromtxt(datafile, delimiter=",", skip_header=1)
-    n, bins, patches = plt.hist(data, bins=100, range=(0, 2000), edgecolor="k",
+    n, bins, patches = plt.hist(data, bins=100, range=(0, 3000), edgecolor="k",
                                 density=True)
 
     # Set plots format
     format_plotting()
+    plt.xlabel("t [ms]")
+    plt.ylabel("P")
 
     # Save and show results
     script_path = os.path.dirname(os.path.realpath(__file__))
@@ -87,10 +90,37 @@ def plot_2D_scatterplot(datafile="data/firing_correlations.csv"):
     plt.savefig('{}/results/firing_correlations.eps'.format(script_path),
             bbox_inches='tight')
     plt.show()
+    return
+
+
+def plot_2D_histogram(datafile="data/firing_correlations.csv"):
+    """
+    Plot the 2-D histogram of 3 neurons timing differences
+    """
+    # Import data and prepare plot
+    data = np.genfromtxt(datafile, delimiter=",", skip_header=1)
+    times_1 = data[:,0]
+    times_2 = data[:,1]
+    plt.hist2d(times_1, times_2, bins=180, normed=False,
+               norm=matplotlib.colors.LogNorm(), cmap=plt.cm.get_cmap('summer'))
+    plt.colorbar()
+
+    # Set plots format
+    format_plotting()
+    plt.title("Ext. Coincidence Detector 2-D Hist")
+    plt.xlabel(r"$\Delta t_{14} \quad [ms]$")
+    plt.ylabel(r"$\Delta t_{24} \quad [ms]$")
+
+    # Save and show results
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    plt.savefig('{}/results/firing_2d_histogram.eps'.format(script_path),
+            bbox_inches='tight')
+    plt.show()
+    return
 
 
 def main():
-    plot_2D_scatterplot()
+    plot_2D_histogram()
 
 
 if __name__ == "__main__":
