@@ -107,7 +107,6 @@ def plot_2D_histogram(datafile="data/firing_correlations.csv"):
 
     # Set plots format
     format_plotting()
-    plt.title("Ext. Coincidence Detector 2-D Hist")
     plt.xlabel(r"$\Delta t_{14} \quad [ms]$")
     plt.ylabel(r"$\Delta t_{24} \quad [ms]$")
 

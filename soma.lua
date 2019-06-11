@@ -50,7 +50,7 @@ tau = C*R * 1e-3    -- [s]
 U_rest = -70        -- [mV]
 U_current = -70     -- [mV]
 U_threshold = -54   -- [mV]
-U_pulse = 6         -- [mV]
+U_pulse = 3        -- [mV]
 -- Set movement to 0 for a static growth cone
 movement = 1
 growth = true
@@ -174,7 +174,7 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
             synapse_time = absolute_time
             process_noise = Stat.poissonFloat(poisson_noise) * 1e-3
             if sourceID==1 then
-                U_current = U_current + 2*U_pulse
+                U_current = U_current + 10*U_pulse
             else
                 U_current = U_current + U_pulse
             end

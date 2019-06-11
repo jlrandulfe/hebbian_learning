@@ -29,7 +29,7 @@ axon_link_length = 5
 
 function initializeAgent()
 
-    Agent.changeColor{b=255}
+    Agent.changeColor{r=255, g=255, b=255}
     -- Initialize the soma at the middle of the map
 
 	Speed = 0

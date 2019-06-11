@@ -35,7 +35,7 @@ record_kinematics = false
 
 -- Environment properties
 env_noise_var = 1
-drag_coef = 0.8
+drag_coef = 0.08
 
 -- Agent properties
 move = false
@@ -168,12 +168,12 @@ function handleEvent(sourceX, sourceY, sourceID, eventDescription, eventTable)
         nonvalid_somas = eventTable[2]
         Event.emit{speed=0,description="cone_parent",
                    table={["cone_id"]=ID, ["parent_id"]=sourceID}}
-        -- Auxiliary patch for avoiding undesired growth in the extended
+        -- Auxiliary patextended_coincidence_detectorch for avoiding undesired growth in the extended
         -- coincidence detector
-        if parent_id==2 or parent_id==3 then
-            growth = false
-            say("Neuron " .. parent_id .. " prevented from growing")
-        end
+        -- if parent_id==2 or parent_id==3 then
+        --     growth = false
+        --     say("Neuron " .. parent_id .. " prevented from growing")
+        -- end
     end
 
     if eventDescription == "excited_neuron" then
